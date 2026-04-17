@@ -1,0 +1,4048 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Balık Besleme ve Yem Teknolojisi Deneme Sınavı</title>
+  <style>
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f0f4f8;
+      margin: 0;
+      padding: 10px;
+      display: flex;
+      justify-content: center;
+      padding-bottom: 80px;
+    }
+
+    .app-shell {
+      width: 100%;
+      max-width: 860px;
+    }
+
+    .menu-container, .quiz-container {
+      background: #fff;
+      padding: 20px;
+      border-radius: 14px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      width: 100%;
+    }
+
+    .menu-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 15px;
+      margin-bottom: 30px;
+    }
+
+    .menu-btn {
+      border: none;
+      border-radius: 12px;
+      padding: 20px;
+      text-align: left;
+      cursor: pointer;
+      background: linear-gradient(135deg, #007bff, #0056b3);
+      color: white;
+    }
+
+    .menu-btn.locked {
+      background: linear-gradient(135deg, #6c757d, #495057);
+      cursor: not-allowed;
+      order: 999;
+      opacity: 0.85;
+    }
+
+    .wrong-menu-btn {
+      border: none;
+      border-radius: 12px;
+      padding: 20px;
+      text-align: left;
+      cursor: pointer;
+      background: linear-gradient(135deg, #dc3545, #a71d2a);
+      color: white;
+      order: 9999;
+      animation: wrongBlink 10s infinite;
+    }
+
+    @keyframes wrongBlink {
+      0%, 45% {
+        opacity: 1;
+        transform: scale(1);
+        box-shadow: 0 0 0 rgba(220,53,69,0);
+      }
+      50% {
+        opacity: 0.35;
+        transform: scale(1.02);
+        box-shadow: 0 0 18px rgba(220,53,69,0.45);
+      }
+      55%, 100% {
+        opacity: 1;
+        transform: scale(1);
+        box-shadow: 0 0 0 rgba(220,53,69,0);
+      }
+    }
+
+    .quiz-container {
+      display: none;
+      position: relative;
+      padding-top: 85px;
+      min-height: 100vh;
+    }
+
+    .progress-bar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 6px;
+      background: #28a745;
+      transition: 0.3s;
+      width: 0%;
+      border-radius: 14px 14px 0 0;
+    }
+
+    .main-menu-btn {
+      border: none;
+      background: none;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: calc(1rem + 4pt);
+      color: #333;
+      padding: 5px 0;
+    }
+
+    .header-info {
+      position: absolute;
+      top: 15px;
+      left: 20px;
+      right: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      padding-right: 110px;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      min-width: 0;
+      flex: 1;
+      flex-wrap: wrap;
+    }
+
+    .header-subject {
+      font-weight: normal;
+      color: #777;
+      font-size: 0.95rem;
+      line-height: 1.35;
+      word-break: break-word;
+    }
+
+    .retry-badge {
+      display: none;
+      margin-bottom: 12px;
+      padding: 10px 14px;
+      border-radius: 10px;
+      background: #fff3cd;
+      color: #856404;
+      border: 1px solid #ffe69c;
+      font-weight: bold;
+      font-size: 0.95rem;
+    }
+
+    .question-title {
+      margin-top: 0;
+      margin-bottom: 16px;
+      line-height: 1.45;
+      font-size: 1.2rem;
+      color: #222;
+    }
+
+    .option-btn {
+      width: 100%;
+      padding: 16px;
+      margin-bottom: 12px;
+      border-radius: 12px;
+      border: 2px solid #e9ecef;
+      background: #f8f9fa;
+      text-align: left;
+      cursor: pointer;
+      font-size: 1.05rem;
+      transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.2s ease;
+      position: relative;
+    }
+
+    .option-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+    }
+
+    .option-btn:disabled {
+      cursor: default;
+    }
+
+    .option-btn.correct {
+      background: #d4edda !important;
+      border-color: #28a745 !important;
+      color: #155724 !important;
+      font-weight: bold;
+    }
+
+    .option-btn.wrong {
+      background: #f8d7da !important;
+      border-color: #dc3545 !important;
+      color: #721c24 !important;
+      font-weight: bold;
+    }
+
+    .tick {
+      display: inline-block;
+      margin-left: 10px;
+      color: #1f9d45;
+      font-weight: bold;
+      opacity: 0;
+      transform: scale(0.4);
+    }
+
+    .tick.show {
+      animation: popTick 0.45s ease forwards;
+    }
+
+    @keyframes popTick {
+      0%   { opacity: 0; transform: scale(0.4); }
+      60%  { opacity: 1; transform: scale(1.2); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+
+    .explanation {
+      display: none;
+      margin-top: 20px;
+      padding: 15px;
+      background: #eaf2f8;
+      border-left: 5px solid #2980b9;
+      border-radius: 8px;
+      line-height: 1.5;
+    }
+
+    .nav-controls {
+      display: flex;
+      gap: 12px;
+      margin-top: 25px;
+    }
+
+    .nav-btn {
+      flex: 1;
+      padding: 18px;
+      border: none;
+      border-radius: 12px;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .next-btn { background: #007bff; }
+    .prev-btn {
+      background: #e9ecef;
+      color: #dc3545 !important;
+      border: 1px solid #ddd;
+    }
+
+    .quiz-footer {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 20px;
+      padding-top: 15px;
+      border-top: 1px solid #eee;
+      color: #666;
+      font-weight: bold;
+      font-size: 0.9rem;
+      flex-wrap: wrap;
+    }
+
+    .disclaimer-box {
+      margin-top: 20px;
+      padding: 15px;
+      background: #fdfdfd;
+      border: 1px solid #eee;
+      border-radius: 10px;
+      color: #888;
+      font-size: 0.8rem;
+      line-height: 1.4;
+      text-align: center;
+    }
+
+    .disclaimer-title {
+      display: block;
+      font-weight: bold;
+      color: #555;
+      margin-bottom: 5px;
+      text-transform: uppercase;
+      font-size: 0.7rem;
+    }
+
+    .source-tag {
+      position: fixed;
+      bottom: 8px;
+      left: 8px;
+      background: rgba(0, 0, 0, 0.05);
+      color: #777;
+      padding: 5px 10px;
+      border-radius: 10px;
+      font-size: 0.72rem;
+      font-weight: bold;
+      z-index: 9999;
+    }
+
+    .reset-set-btn {
+      position: absolute;
+      top: 15px;
+      right: 20px;
+      background: #ffc107;
+      border: none;
+      padding: 8px;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 0.8rem;
+      cursor: pointer;
+      z-index: 5;
+    }
+
+    @media (max-width: 480px) {
+      .quiz-container {
+        padding-top: 110px;
+      }
+
+      .header-info {
+        top: 12px;
+        left: 12px;
+        right: 12px;
+        padding-right: 104px;
+        align-items: flex-start;
+      }
+
+      .header-left {
+        display: block;
+        padding-right: 6px;
+      }
+
+      .main-menu-btn {
+        display: block;
+        font-size: 0.95rem;
+        padding: 0;
+        margin-bottom: 6px;
+      }
+
+      .header-subject {
+        display: block;
+        margin: 0;
+        font-size: 0.82rem;
+        line-height: 1.3;
+        max-width: 100%;
+      }
+
+      .question-title {
+        font-size: 1.05rem;
+      }
+
+      .option-btn {
+        font-size: 1rem;
+        padding: 14px;
+      }
+
+      .reset-set-btn {
+        top: 12px;
+        right: 12px;
+        font-size: 0.75rem;
+        padding: 7px 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="app-shell">
+  <div id="menuContainer" class="menu-container">
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:20px;">
+      <h1 id="mainTitle" style="margin:0;">Balık Besleme ve Yem Teknolojisi Deneme Sınavı</h1>
+      <button onclick="clearAllStatistics()" style="background:#dc3545; color:white; border:none; padding:8px 10px; border-radius:8px; cursor:pointer; font-size:0.75rem;">
+        Verileri Sıfırla
+      </button>
+<button onclick="shuffleAllQuestions()" style="background:#28a745;color:white;border:none;padding:8px 10px;border-radius:8px;cursor:pointer;font-size:0.75rem;">Soruları Karıştır</button>
+
+    </div>
+
+    <div id="menuGrid" class="menu-grid"></div>
+
+    <div class="disclaimer-box">
+      <span class="disclaimer-title">⚠️ Önemli Uyarı</span>
+      Bu sistemde yer alan içerikler yalnızca eğitim amaçlıdır. İçeriklerin kullanımından doğabilecek doğrudan veya dolaylı hiçbir sorumluluk kabul edilmez. Tüm kullanım sorumluluğu kullanıcıya aittir.
+    </div>
+  </div>
+
+  <div id="quizContainer" class="quiz-container">
+    <div class="progress-bar" id="progressBar"></div>
+
+    <div class="header-info">
+      <div class="header-left">
+        <button onclick="showMenu()" class="main-menu-btn">☰ Ana Menü</button>
+        <span id="headerSubject" class="header-subject"></span>
+      </div>
+    </div>
+
+    <button onclick="resetCurrentSet()" class="reset-set-btn">Seti Sıfırla</button>
+
+    <div id="retryBadge" class="retry-badge">Yalnış cevaplanan soru</div>
+    <h2 id="questionText" class="question-title">...</h2>
+
+    <div id="optionsArea"></div>
+
+    <div class="quiz-footer">
+      <div id="footerLeft">Kalan: 0</div>
+      <div id="footerRight">0 / 0</div>
+    </div>
+
+    <div id="explanationArea" class="explanation"></div>
+
+    <div class="nav-controls">
+      <button id="prevBtn" class="nav-btn prev-btn" onclick="goBack()" style="visibility:hidden;">❮ Önceki</button>
+      <button id="nextBtn" class="nav-btn next-btn" onclick="goForward()" style="visibility:hidden;">Yeni Soru ❯</button>
+    </div>
+  </div>
+</div>
+
+<div class="source-tag" id="sourceTag">Kaynak: yapayzeka/ balik_besleme_ve_yem_teknolojisi_versiyon_1</div>
+
+<script>
+  const BASE_SUBJECT = "2.versiyon soru havuzu";
+  const VERSION_NUMBER = 1;
+
+  function buildVersionName(base, version) {
+    return `${base} Versiyon ${version}`;
+  }
+
+  function buildVersionSlug(base, version) {
+    return `${base.toLowerCase().replace(/ç/g, "c").replace(/ğ/g, "g").replace(/ı/g, "i").replace(/ö/g, "o").replace(/ş/g, "s").replace(/ü/g, "u").replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "")}_versiyon_${version}`;
+  }
+
+  const CURRENT_SUBJECT = BASE_SUBJECT;
+  const VERSION_SLUG = buildVersionSlug(BASE_SUBJECT, VERSION_NUMBER);
+  const SOURCE_TEXT = `Kaynak: 2_versiyon_soru_havuzu_word_120`;
+  const QUESTIONS_PER_SET = 30;
+
+  const questions = [
+  {
+    "q": "Balık çiftliklerinin üretim süreci aşağıdakilerden hangisine bağımlıdır? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Ekosistemin sürdürülebilirliğine",
+      "Sadece kirlilik ve iklim çeşitliliğine",
+      "Doğal sınırları aşan teknolojik yöntemlere",
+      "Sektörün kontrolsüz büyümesine"
+    ],
+    "c": 0,
+    "e": ""
+  },
+  {
+    "q": "Dünyanın en hızlı büyüyen gıda üretim sektörü olan su canlıları yetiştiriciliği, bu ivmeyi hangi tarihten itibaren kazanmıştır? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "2000'ler",
+      "1980'ler",
+      "1990'lar",
+      "1970'ler"
+    ],
+    "c": 3,
+    "e": ""
+  },
+  {
+    "q": "Günümüzde küresel balık stoklarının %58'lik kısmının avlanma durumu nedir? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Azami sınırda avlanmaktadır.",
+      "Aşırı avlanmaya maruz kalmaktadır.",
+      "Sürdürülebilirliğe henüz dahil edilmemiştir.",
+      "Çöküş aşamasındadır."
+    ],
+    "c": 0,
+    "e": ""
+  },
+  {
+    "q": "OECD tarafından yetiştiricilik sektörü hangi dönemde \"yeni bir endüstriyel sektör\" olarak tanımlanmıştır? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "1970'lerin başı",
+      "2000'lerin ortası",
+      "2015 yılı başı",
+      "1980'lerin sonu"
+    ],
+    "c": 3,
+    "e": ""
+  },
+  {
+    "q": "Türkiye'deki su ürünleri üretiminde yetiştiriciliğin payı 2015 yılında yüzde kaça ulaşmıştır? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "%58",
+      "%20,6",
+      "%6",
+      "%31"
+    ],
+    "c": 1,
+    "e": ""
+  },
+  {
+    "q": "Türkiye'de 2015 yılı verilerine göre ortalama yıllık balık tüketimi kaç kilogramdır? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "6,2",
+      "20,6",
+      "12,0",
+      "1,8"
+    ],
+    "c": 0,
+    "e": ""
+  },
+  {
+    "q": "Balık çiftliklerine yönelik yerel tepkilerin temel odak noktası aşağıdakilerden hangisidir? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Teknolojik yetersizlikler",
+      "İhracat rakamlarının düşüklüğü",
+      "Yem fabrikalarının uzaklığı",
+      "Denizlerin müşterek kullanımının özel mülke dönüşmesi"
+    ],
+    "c": 3,
+    "e": ""
+  },
+  {
+    "q": "Türkiye'de hamsinin kullanım amacı 1950-1960 arasından 2013 yılına nasıl bir değişim göstermiştir? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "2013'te hamsinin %56'sı balık unu ve yağı üretimine yönlendirilmiştir.",
+      "Sadece ihraç edilmeye başlanmıştır.",
+      "Balık unu üretimi tamamen durdurulmuştur.",
+      "İnsan tüketimi %56'dan %90'a çıkmıştır."
+    ],
+    "c": 0,
+    "e": ""
+  },
+  {
+    "q": "Türkiye'deki çipura ve levrek yemlerinde kullanılan balık yağı oranı genellikle kaçtır? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "%6,2",
+      "%60-80",
+      "%12-13",
+      "%40-45"
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "Suyun biyolojik özelliklerine göre, balık vücudunun yaklaşık yüzde kaçı sudur? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "%90",
+      "%58",
+      "%70",
+      "%50"
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "Suyun hangi fiziksel özelliği balıkların daha az enerji ile yüzmesini sağlar? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Buharlaşma ısısının yüksekliği",
+      "Eritici ve iyonize edici özelliği",
+      "Yüksek yüzey gerilimi",
+      "Kaldırma kuvveti"
+    ],
+    "c": 3,
+    "e": ""
+  },
+  {
+    "q": "Maddelerin çok yoğun olan ortamdan az yoğun olan ortama doğru hareket etmesine ne ad verilir? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Aktif taşıma",
+      "Pinozitoz",
+      "Difüzyon",
+      "İyonizasyon"
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "Hücre zarının sıvı damlacıklarını yutarak hücre içine alması süreci metinde hangi terimle ifade edilmiştir? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Difüzyon",
+      "Pinozitoz",
+      "Metabolizma",
+      "Ozmoz"
+    ],
+    "c": 1,
+    "e": ""
+  },
+  {
+    "q": "Aşağıdaki özelliklerden hangisi \"Suda Çözünen Vitaminler\" (B grubu ve C) için yanlıştır? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Vücutta aşırı birikerek toksisite (zehirlenme) riski oluştururlar.",
+      "Sürekli olarak rasyonla (yemle) verilmelidirler.",
+      "Fazlası genellikle idrarla dışarı atılır.",
+      "Vücutta önemli miktarda depolanmazlar."
+    ],
+    "c": 0,
+    "e": ""
+  },
+  {
+    "q": "Balıklarda vitamin yetersizliği durumunda görülen \"genel\" belirtiler arasında aşağıdakilerden hangisi yer almaz? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Deri renginde koyulaşma",
+      "Vücut renginin açılması (beyazlaşma)",
+      "Büyümenin yavaşlaması",
+      "İştah kaybı"
+    ],
+    "c": 1,
+    "e": ""
+  },
+  {
+    "q": "Vitaminlerin tanımı ile ilgili metindeki en temel vurgu nedir? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Sadece solungaç yoluyla alınabilmeleri",
+      "Çok az miktarda ihtiyaç duyulan organik bileşikler olmaları",
+      "Vücudun %70'ini oluşturmaları",
+      "Enerji kaynağı olarak tüketilmeleri"
+    ],
+    "c": 1,
+    "e": ""
+  },
+  {
+    "q": "Vitamin yetersizliğinin \"erken dönem\" teşhisindeki en büyük zorluk metne göre nedir? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Vitaminlerin idrarla atılması",
+      "Vitaminlerin suda çözünmesi",
+      "Balıkların sürekli su içmesi",
+      "Belirtilerin başlangıçta spesifik (belirgin) olmaması"
+    ],
+    "c": 3,
+    "e": ""
+  },
+  {
+    "q": "Karbonhidrat metabolizmasında anahtar rol oynayan, koenzim formu \"Tiamin pirofosfat\" (TPP) olan vitamin hangisidir? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Tiamin (B1)",
+      "Piridoksin (B6)",
+      "Pantotenik Asit (B5)",
+      "Riboflavin (B2)"
+    ],
+    "c": 0,
+    "e": ""
+  },
+  {
+    "q": "Çiğ balık eti ve kabuklu deniz canlılarında bulunan, Tiamin (B1) vitaminini parçalayarak yetersizliğe yol açan antimetabolit madde hangisidir? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Lipaz",
+      "Avidin",
+      "Tiaminaz",
+      "Oksidaz"
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "Metne göre, \"Riboflavin (B2)\" vitamininin en karakteristik yetersizlik belirtisi aşağıdakilerden hangisidir? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Gözde katarakt (kornea opaklığı) ve kanlanma",
+      "Kuyruk yüzgecinde erime",
+      "Pullarda dökülme",
+      "Karaciğerde yağlanma"
+    ],
+    "c": 0,
+    "e": ""
+  },
+  {
+    "q": "Protein metabolizmasında ve amino asit dönüşümlerinde (transaminasyon) görev alan, yetersizliğinde sinirsel bozukluklar görülen vitamin hangisidir? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Biyotin",
+      "Tiamin (B1)",
+      "Piridoksin (B6)",
+      "Siyanokobalamin (B12)"
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "Piridoksin (B6) yetersizliği çeken balıklarda görülen \"hızlı ve düzensiz yüzme, nefes darlığı ve operkulumların (solungaç kapaklarının) aşırı açılması\" durumu hangi sistemin bozulduğunu gösterir? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Boşaltım Sistemi",
+      "Sindirim Sistemi",
+      "Merkezi Sinir Sistemi",
+      "Üreme Sistemi"
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "Riboflavin (B2) vitamini yetersizliğinde Gökkuşağı alabalıklarında görülen spesifik deri değişikliği nedir? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Derinin tamamen beyazlaşması",
+      "Derinin şeffaf hale gelmesi",
+      "Deride pulların dikleşmesi",
+      "Vücut renginin aşırı koyulaşması"
+    ],
+    "c": 3,
+    "e": ""
+  },
+  {
+    "q": "Tiamin (B1) eksikliğinde \"ani su hareketleri veya ışık değişimlerine karşı aşırı duyarlılık ve ölümcül kasılmalar\" en çok hangi balık grubunda vurgulanmıştır? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Deniz Balıkları",
+      "Salmonidler (Alabalıklar)",
+      "Sazanlar",
+      "Akvaryum Balıkları"
+    ],
+    "c": 1,
+    "e": ""
+  },
+  {
+    "q": "Metne göre, eksikliğinde özellikle Salmonidlerde (Alabalıklar) \"besinsel kaynaklı solungaç hastalığı\" (Nutritional gill disease) görülen, solungaç lamellerinin birbirine yapışmasına neden olan vitamin hangisidir? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Kolin",
+      "Niasin",
+      "Pantotenik Asit (B5)",
+      "Folik Asit"
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "Pantotenik asit yetersizliğinde balıklarda görülen \"klup (topuz) solungaç\" yapısının temel sebebi nedir? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Solungaçların renk değiştirmesi",
+      "Solungaçlarda kan pıhtılaşması",
+      "Lamellerin distal uçlarında epitel doku artışı ve yapışmalar",
+      "Solungaç kapaklarının (operkulum) tamamen düşmesi"
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "Hücrelerde NAD ve NADP koenzimlerinin yapısına katılan ve yetersizliğinde balıklarda deri lezyonları, güneş yanığına benzer duyarlılık (Back-peel) görülen vitamin hangisidir? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Vitamin B12",
+      "Niasin (Nikotinik Asit)",
+      "İnozitol",
+      "Biyotin"
+    ],
+    "c": 1,
+    "e": ""
+  },
+  {
+    "q": "Çiğ yumurta akında bulunan \"Avidin\" maddesiyle birleşerek balıklarda yetersizliğe yol açan vitamin aşağıdakilerden hangisidir? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Vitamin B12",
+      "Niasin",
+      "Kolin",
+      "Biyotin"
+    ],
+    "c": 3,
+    "e": ""
+  },
+  {
+    "q": "Kan hücrelerinin (eritrosit) yapımı için elzem olan, çekirdek bölünmesinde rol oynayan ve yetersizliğinde \"solgun solungaçlar\" ile karakterize anemi görülen vitamin hangisidir? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Folik Asit",
+      "Biyotin",
+      "İnozitol",
+      "Pantotenik Asit"
+    ],
+    "c": 0,
+    "e": ""
+  },
+  {
+    "q": "Vitamin B12 (Siyanokobalamin) ile ilgili aşağıdakilerden hangisi yanlıştır? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Yapısında Kobalt minerali bulunur.",
+      "Protein ve karbonhidrat metabolizmasında görev yapar.",
+      "Bitkisel kaynaklı yemlerde (mısır, soya vb.) çok bol miktarda bulunur.",
+      "Eksikliğinde düşük eritrosit sayısı ve hemoglobin miktarı görülür."
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "Yağ metabolizmasında görev alan, \"lipotropik\" etkisi sayesinde karaciğerde aşırı yağ birikmesini (yağlı karaciğer sendromu) önleyen madde hangisidir? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Tiamin",
+      "Kolin",
+      "Biyotin",
+      "Folik Asit"
+    ],
+    "c": 1,
+    "e": ""
+  },
+  {
+    "q": "Sazanlarda yetersizliği durumunda deri lezyonları, yüzgeçlerde kanama ve mukus kaybına bağlı olarak derinin kuruması (matlaşması) görülen vitamin hangisidir? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Pantotenik Asit",
+      "Niasin",
+      "İnozitol",
+      "Vitamin B12"
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "Metne göre Biyotin yetersizliğinde balıkların karaciğerinde hangi enzimin aktivitesinin düştüğü ve bu durumun teşhiste kullanıldığı belirtilmiştir? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Piruvat karboksilaz",
+      "Tiaminaz",
+      "L-glunalaktan oksidaz",
+      "Lipaz"
+    ],
+    "c": 0,
+    "e": ""
+  },
+  {
+    "q": "Balıklarda C vitamini sentezlenememesinin temel sebebi olan ve glikozun askorbik aside dönüşümünü sağlayan hangi enzimin eksikliğidir? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Piruvat karboksilaz",
+      "Tiaminaz",
+      "L-gulonolakton oksidaz",
+      "Karbonik anhidraz"
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "C vitamini (L-Askorbik asit) yetersizliğinde balıklarda \"omurga eğrilikleri\" görülmesinin biyokimyasal nedeni nedir? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Sinir iletiminin kesilmesi",
+      "Kalsiyum emiliminin durması",
+      "Kas dokusunun aşırı yağlanması",
+      "Bağ dokusu ve kollajen sentezindeki bozukluklar"
+    ],
+    "c": 3,
+    "e": ""
+  },
+  {
+    "q": "C vitamini ile ilgili aşağıdakilerden hangisi yanlıştır? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Stres durumunda (nakil, aşılama) ihtiyacı artar.",
+      "Yaraların iyileşmesinde ve kıkırdak yapımında rol oynar.",
+      "Yem üretimi (ekstrüzyon) sırasında ısıya karşı en dayanıklı vitamindir.",
+      "Antioksidan özelliğe sahiptir ve bağışıklığı güçlendirir."
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "Yağda çözünen vitaminlerin genel özellikleriyle ilgili metinde geçen hangi bilgi, suda çözünenlerden en büyük farkıdır? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Karaciğerde depolanabilmeleri ve aşırı alımda toksisite riski taşımaları",
+      "Sadece solungaçlar yoluyla emilmeleri",
+      "Sadece bitkisel yağlarda bulunmaları",
+      "Enerji kaynağı olarak kullanılmaları"
+    ],
+    "c": 0,
+    "e": ""
+  },
+  {
+    "q": "Görme pigmentlerinin (Rodopsin) yapısına katılan ve yetersizliğinde \"gece körlüğü, ekzoftalmus (göz fırlaması) ve kornea kanamaları\" görülen vitamin hangisidir? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Vitamin A",
+      "Vitamin E",
+      "Vitamin D",
+      "Vitamin K"
+    ],
+    "c": 0,
+    "e": ""
+  },
+  {
+    "q": "Vitamin A eksikliğinde balıkların operkulum (solungaç kapağı) ve yüzgeçlerinde görülen karakteristik bozukluk nedir? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Renk değişimi",
+      "Pulların tamamen dökülmesi",
+      "Kemiksi ve konnektif doku deformasyonu",
+      "Aşırı mukus salgısı"
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "Kalsiyum ve fosfor metabolizmasını düzenleyerek kemik mineralizasyonunu sağlayan vitamin hangisidir? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Vitamin D",
+      "Vitamin B12",
+      "Vitamin A",
+      "Vitamin E"
+    ],
+    "c": 0,
+    "e": ""
+  },
+  {
+    "q": "Metne göre, balıkların derisinde güneş ışığının etkisiyle sentezlenebilen ve kalsiyum dengesi için elzem olan vitamin formu aşağıdakilerden hangisidir? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Vitamin E (Tokoferol)",
+      "Vitamin K1 (Filokinon)",
+      "Vitamin A1 (Retinol)",
+      "Vitamin D3 (Kolekalsiferol)"
+    ],
+    "c": 3,
+    "e": ""
+  },
+  {
+    "q": "Vitamin D yetersizliği çeken balıklarda \"kalsiyum dengesinin bozulması\" sonucu kandaki hangi enzim aktivitesinde artış gözlenir? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Tiamin pirofosfat",
+      "Piruvat karboksilaz",
+      "Alkalen Fosfataz",
+      "L-gulonolakton oksidaz"
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "Metne göre Vitamin E (Tokoferol) ile ilgili aşağıdakilerden hangisi en temel biyolojik fonksiyondur? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Hücre zarlarındaki çoklu doymamış yağ asitlerinin (PUFA) oksidasyonunu engelleyen bir antioksidan olması",
+      "Kalsiyumun kemiklere çökmesini yönetmek",
+      "Sindirim enzimlerini aktive etmek",
+      "Kanın pıhtılaşmasını sağlamak"
+    ],
+    "c": 0,
+    "e": ""
+  },
+  {
+    "q": "Vitamin E yetersizliği çeken balıklarda, kas dokusunun dejenere olması ve renginin solmasıyla karakterize edilen durum aşağıdakilerden hangisidir? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Lordoz",
+      "Skolyoz",
+      "Eksüdatif Diyatez",
+      "Besinsel Musküler Distrofi (Kas zayıflığı)"
+    ],
+    "c": 3,
+    "e": ""
+  },
+  {
+    "q": "Kanın pıhtılaşma mekanizmasında (Protrombin sentezi) görev alan ve yetersizliğinde balıklarda yaralanma sonrası durdurulamayan kanamalar ile anemi görülen vitamin hangisidir? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Vitamin A",
+      "Vitamin K",
+      "Vitamin D",
+      "Vitamin E"
+    ],
+    "c": 1,
+    "e": ""
+  },
+  {
+    "q": "Lipidlerin (Yağların) balık beslemedeki önemiyle ilgili aşağıdakilerden hangisi yanlıştır? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Proteinlerin enerji amacıyla yakılmasını önleyerek \"protein tasarrufu\" sağlarlar.",
+      "Yağda çözünen vitaminlerin emilimi için gereklidirler.",
+      "Hücre zarının yapısını oluşturan fosfolipidlerin kaynağıdırlar.",
+      "Proteinlere göre daha düşük enerji sağlarlar."
+    ],
+    "c": 3,
+    "e": ""
+  },
+  {
+    "q": "Balık rasyonlarında yağların oksidasyona (acılaşma) uğraması sonucu oluşan \"peroksitler\" hangi vitaminin ihtiyacını artırır? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Vitamin C",
+      "Biyotin",
+      "Vitamin E",
+      "Vitamin B12"
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "Doğada bulunan ve balıklar için enerji kaynağı olan \"Trigliseridlerin\" yapısı aşağıdakilerden hangisinden oluşur? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Bir kolesterol ve iki fosfat",
+      "Bir gliserol ve üç yağ asidi",
+      "Bir glikoz ve üç amino asit",
+      "Üç gliserol ve bir yağ asidi"
+    ],
+    "c": 1,
+    "e": ""
+  },
+  {
+    "q": "Balıklarda \"Esansiyel Yağ Asitleri\" (EYA) ile ilgili metinde geçen en kritik bilgi nedir? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Sadece doymuş yağ asitlerine ihtiyaç duyarlar.",
+      "Balıklar çift bağları n-3 ve n-6 pozisyonlarına yerleştiremedikleri için bu yağları dışarıdan almalıdırlar.",
+      "Balıklar tüm yağ asitlerini vücutlarında sentezleyebilirler.",
+      "Yağ asitleri sadece tatlı su balıkları için gereklidir."
+    ],
+    "c": 1,
+    "e": ""
+  },
+  {
+    "q": "Metne göre, balıklarda yağ asidi yetersizliği durumunda görülen \"karaciğerin solgunlaşması ve şişmesi\" (yağlı karaciğer) durumu hangi terimle ifade edilir? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Karaciğer Lipidosis (Steatosis)",
+      "Ödem",
+      "Pansteatitis",
+      "Musküler Distrofi"
+    ],
+    "c": 0,
+    "e": ""
+  },
+  {
+    "q": "Lipidlerin sindirimi sırasında, midede veya mide sonrası bağırsaklarda büyük yağ damlacıklarını emülsiyon haline getirerek yüzey alanını genişleten salgı hangisidir? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Hidroklorik asit",
+      "İnsülin",
+      "Pepsin",
+      "Safra Tuzları"
+    ],
+    "c": 3,
+    "e": ""
+  },
+  {
+    "q": "Balıklarda lipidlerin hidrolizini (parçalanmasını) sağlayan ve temel olarak pankreastan (veya pilorik çekumlardan) salgılanan ana enzim hangisidir? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Lipaz",
+      "Selülaz",
+      "Tripsit",
+      "Amilaz"
+    ],
+    "c": 0,
+    "e": ""
+  },
+  {
+    "q": "Bağırsak lümeninde parçalanan yağ asitleri ve monogliseridlerin, bağırsak epitel hücrelerinden (enterosit) geçebilmesi için oluşturdukları suda çözünür kompleks yapıya ne ad verilir? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Trigliserid",
+      "Şilomikron",
+      "Misel (Micelle)",
+      "Glikojen"
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "Balıklarda emilen yağların dokulara taşınması için proteinlerle birleşerek oluşturdukları taşıyıcı birimlere ne ad verilir? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Glikolipid",
+      "Serbest yağ asidi",
+      "Lipoprotein (Şilomikronlar ve VLDL)",
+      "Amino asit"
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "Karbonhidratların (Şekerlerin) balık beslemedeki rolüyle ilgili aşağıdakilerden hangisi doğrudur? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Ucuz bir enerji kaynağıdır ve yem peletinin dayanıklılığını artırır (bağlayıcı özellik).",
+      "Etobur balıklar (Alabalık, Levrek), otobur balıklara (Sazan) göre karbonhidratları daha yüksek oranda sindirebilirler.",
+      "Balıklar için proteinlerden daha önemli bir enerji kaynağıdır.",
+      "Balıkların rasyonunda mutlaka %50 oranında bulunması zorunludur."
+    ],
+    "c": 0,
+    "e": ""
+  },
+  {
+    "q": "Balıkların karaciğer ve kaslarında karbonhidratları depolama formu aşağıdakilerden hangisidir? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Nişasta",
+      "Selüloz",
+      "Kitin",
+      "Glikojen"
+    ],
+    "c": 3,
+    "e": ""
+  },
+  {
+    "q": "Metne göre, balıkların \"Selüloz\" gibi kompleks karbonhidratları sindirememesinin temel sebebi nedir? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Suyun çok soğuk olması",
+      "Selülozun çok hızlı emilmesi",
+      "Sindirim sistemlerinde \"Selülaz\" enziminin bulunmaması",
+      "Mide asidinin yetersizliği"
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "Karbonhidratların aşırı tüketimi sonucu balıklarda görülen \"Karaciğerde aşırı glikojen birikmesi ve karaciğerin büyümesi\" durumu hangi olumsuz sonuca yol açar? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Karaciğer fonksiyonlarının bozulmasına ve ölüm oranının artmasına",
+      "Pulların daha sert olmasına",
+      "Balığın daha hızlı büyümesine",
+      "Balığın suyun üstünde kalmasına"
+    ],
+    "c": 0,
+    "e": ""
+  },
+  {
+    "q": "Balıklarda \"Glikoneojenez\" süreci neyi ifade eder? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Karbonhidrat olmayan kaynaklardan (amino asitler/yağlar) glikoz sentezlenmesini",
+      "Şekerin yağa dönüşmesini",
+      "Nişastanın parçalanmasını",
+      "Glikozun idrarla atılmasını"
+    ],
+    "c": 0,
+    "e": ""
+  },
+  {
+    "q": "Isıl işlem (pişirme/ekstrüzyon) görmüş nişastanın balıklar üzerindeki etkisi nedir? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Sadece rengi değiştirir.",
+      "Vitaminlerin emilimini engeller.",
+      "Balık için zehirli hale gelir.",
+      "Sindirilebilirliği ve yararlanılabilirliği artar."
+    ],
+    "c": 3,
+    "e": ""
+  },
+  {
+    "q": "Bitkilerin hücre duvarında bulunan ve \"ham selüloz\" olarak adlandırılan yapının rasyondaki oranı arttıkça ne gerçekleşir? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Diğer besin maddelerinin sindirilme oranını düşürür ve dışkı miktarını artırır.",
+      "Su kirliliğini azaltır.",
+      "Balığın iştahını açar.",
+      "Enerji değeri artırır."
+    ],
+    "c": 0,
+    "e": ""
+  },
+  {
+    "q": "Balıklarda kan şekerini (glikoz) düzenleyen, ancak memelilere göre daha yavaş çalışan hormon hangisidir? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Adrenalin",
+      "İnsülin",
+      "Östrojen",
+      "Tiroksin"
+    ],
+    "c": 1,
+    "e": ""
+  },
+  {
+    "q": "Metne göre, balıklar için en verimli karbonhidrat kaynağı aşağıdakilerden hangisidir? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Ham mısır nişastası",
+      "Pişmiş (jelatinize) nişasta ve glikoz",
+      "Odun talaşı (selüloz)",
+      "Ham buğday"
+    ],
+    "c": 1,
+    "e": ""
+  },
+  {
+    "q": "Balıkların vücut yapısının (kuru madde bazında) yaklaşık %65-75'ini oluşturan, büyüme ve doku onarımı için en kritik besin maddesi hangisidir? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Karbonhidratlar",
+      "Lipidler",
+      "Vitaminler",
+      "Proteinler"
+    ],
+    "c": 3,
+    "e": ""
+  },
+  {
+    "q": "Proteinlerin yapı taşı olan ve birbirlerine \"peptid bağları\" ile bağlanan moleküllere ne ad verilir? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Glikoz birimleri",
+      "Nükleotidler",
+      "Amino asitler",
+      "Yağ asitleri"
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "Balıkların vücutlarında sentezleyemedikleri ve mutlaka dışarıdan yemle almaları gereken amino asit grubuna ne ad verilir? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Aromatik Amino asitler",
+      "Esansiyel (Temel) Amino asitler",
+      "Doymuş Amino asitler",
+      "Non-esansiyel Amino asitler"
+    ],
+    "c": 1,
+    "e": ""
+  },
+  {
+    "q": "Balıklarda midede protein sindirimini başlatan, yüksek asitlikte (düşük pH) aktif hale gelen ana enzim hangisidir? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Amilaz",
+      "Selülaz",
+      "Lipaz",
+      "Pepsin"
+    ],
+    "c": 3,
+    "e": ""
+  },
+  {
+    "q": "Midesiz balıklarda (Örn: Sazan) protein sindirimi temel olarak nerede gerçekleşir? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Bağırsaklarda (Alkali ortamda)",
+      "Ağızda",
+      "Karaciğerde",
+      "Safra kesesinde"
+    ],
+    "c": 0,
+    "e": ""
+  },
+  {
+    "q": "Pankreastan inaktif olarak salgılanan ve bağırsakta \"enterokinaz\" enzimi ile aktif formuna dönüşerek diğer proteolitik enzimleri de aktifleştiren enzim hangisidir? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Kimotripsin",
+      "Karboksipeptidaz",
+      "Tripsin",
+      "Elastaz"
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "\"Sınırlayıcı Amino Asit\" kavramı metne göre neyi ifade eder? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Yemdeki miktarı, balığın ihtiyacına göre en düşük oranda kalarak protein sentezini kısıtlayan amino asidi",
+      "En yüksek miktarda bulunan amino asidi",
+      "Sadece sindirimi zor olan amino asitleri",
+      "Balığın büyümesini durduran zehirli amino asitleri"
+    ],
+    "c": 0,
+    "e": ""
+  },
+  {
+    "q": "Balıklarda proteinlerin enerji kaynağı olarak kullanılmasıyla ilgili aşağıdakilerden hangisi doğrudur? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Balıklar proteinleri enerji için kullanırken memelilere göre daha az verimlidir.",
+      "Sadece bitkisel proteinler enerjiye dönüşür.",
+      "Balıklar proteinleri çok verimli bir şekilde enerjiye dönüştürebilir ve atık azotun (amonyak) atılması için enerji harcamazlar.",
+      "Proteinler balıklar için enerji kaynağı olarak asla kullanılmaz."
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "Amino asitlerin yapısındaki amino grubunun ayrılarak bir keto aside aktarılması işlemine ne ad verilir? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Hidroliz",
+      "Transaminasyon",
+      "Deaminasyon",
+      "Esterleşme"
+    ],
+    "c": 1,
+    "e": ""
+  },
+  {
+    "q": "Metne göre, balıklarda amino asit emilimi temel olarak sindirim sisteminin hangi bölgesinde gerçekleşir? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Anüs bölgesi",
+      "Mide epiteli",
+      "Yemek borusu",
+      "Ön bağırsak ve pilorik çekumlar"
+    ],
+    "c": 3,
+    "e": ""
+  },
+  {
+    "q": "Bir protein kaynağının \"Biyolojik Değeri\" neyi ölçer? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Proteindeki toplam azot miktarını",
+      "Yemin sudaki çözünürlüğünü",
+      "Sindirilen proteinin vücut dokularına dönüşme ve tutulma oranını",
+      "Yemin rengini"
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "Balıklarda protein sentezinin hızı aşağıdakilerden hangisine bağlı değildir? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Su sıcaklığına",
+      "Suyun derinliğine",
+      "Amino asit kompozisyonuna",
+      "Rasyondaki enerji/protein dengesine"
+    ],
+    "c": 1,
+    "e": ""
+  },
+  {
+    "q": "Balıkların diğer çiftlik hayvanlarından farklı olarak kalsiyum, magnezyum ve sodyum gibi bazı mineralleri yem dışında hangi yolla alma avantajları vardır? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Hava kesesi aracılığıyla",
+      "Sadece deri yoluyla",
+      "Solungaçları vasıtasıyla doğrudan sudan",
+      "Sadece ağız yoluyla su içerek"
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "Balıklarda kemik, diş ve pulların yapısına katılan, asit-baz dengesini düzenleyen ve vücutta en fazla bulunan mineral hangisidir? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Kalsiyum",
+      "Bakır",
+      "İyot",
+      "Demir"
+    ],
+    "c": 0,
+    "e": ""
+  },
+  {
+    "q": "Balıklarda \"Fosfor\" minerali ile ilgili aşağıdakilerden hangisi doğrudur? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Fosfor sadece yumuşak dokularda bulunur.",
+      "Bitkisel yemlerdeki \"fitat fosforu\" balıklar tarafından %100 sindirilir.",
+      "Balıklar fosforu sudan çok yüksek oranda alabilirler.",
+      "Yemlerdeki kalsiyum/fosfor oranı karasal hayvanlardaki kadar kritik değildir; ancak fosforun çoğu yemle karşılanmalıdır."
+    ],
+    "c": 3,
+    "e": ""
+  },
+  {
+    "q": "Eksikliğinde balıklarda iştahsızlık, büyümede yavaşlama ve omurgada kalsifikasyon (kireçlenme) bozuklukları görülen, aynı zamanda ATP yapısına katılan mineral hangisidir? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Kobalt",
+      "İyot",
+      "Fosfor",
+      "Bakır"
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "Magnezyum yetersizliği çeken balıklarda görülen karakteristik \"kalsüri\" durumu neyi ifade eder? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Kandaki magnezyumun artmasını",
+      "Solungaçların renk değiştirmesini",
+      "Böbreklerde ve idrarda aşırı kalsiyum birikimi/atılımını",
+      "Pulların dökülmesini"
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "Kanın hemoglobin yapısına katılarak oksijen taşınmasında görev alan ve yetersizliğinde \"hipokromik mikrositik anemi\" görülen mikro mineral hangisidir? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Çinko",
+      "Mangan",
+      "Selenyum",
+      "Demir"
+    ],
+    "c": 3,
+    "e": ""
+  },
+  {
+    "q": "Tiroid hormonlarının (Tiroksin) yapısına katılan ve yetersizliğinde balıklarda \"guatr\" (tiroid dokusu büyümesi) oluşumuna neden olan mineral hangisidir? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Flor",
+      "Magnezyum",
+      "İyot",
+      "Bakır"
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "Balıklarda insülinin yapısında bulunan, yara iyileşmesi ve enzim aktivasyonu için gerekli olan, yetersizliğinde ise lenste katarakt görülebilen mineral hangisidir? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Kükürt",
+      "Çinko",
+      "Kobalt",
+      "Sodyum"
+    ],
+    "c": 1,
+    "e": ""
+  },
+  {
+    "q": "\"Brüt Enerji\" (GE) kavramı metne göre aşağıdakilerden hangisini ifade eder? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Bir besin maddesinin bomba kalorimetresinde tamamen yakılmasıyla açığa çıkan toplam ısı miktarını",
+      "Dışkı ile atılan enerjiyi",
+      "Sindirilebilir enerjinin yarısını",
+      "Balığın sadece büyüme için kullandığı enerjiyi"
+    ],
+    "c": 0,
+    "e": ""
+  },
+  {
+    "q": "Balıklarda enerji kayıpları dikkate alındığında, \"Sindirilebilir Enerji\" (DE) nasıl hesaplanır? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Net Enerji - Isı Artışı",
+      "Brüt Enerji - Dışkı Enerjisi",
+      "Brüt Enerji + Dışkı Enerjisi",
+      "Metabolik Enerji - İdrar Enerjisi"
+    ],
+    "c": 1,
+    "e": ""
+  },
+  {
+    "q": "Balıkların enerji metabolizmasının memelilere göre daha verimli olmasının temel sebebi nedir? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Balıkların su altında uyumaları",
+      "Proteinleri hiç sindirmemeleri",
+      "Balıkların daha çok yem yemesi",
+      "Vücut ısılarını korumak için enerji harcamamaları (poikilotermik olmaları) ve amonyağı üreye çevirmek için enerji tüketmemeleri"
+    ],
+    "c": 3,
+    "e": ""
+  },
+  {
+    "q": "Metne göre, balıklarda enerjinin büyük bir kısmının \"bazal metabolizma\" yerine neye harcanması yetiştiricilikte verimliliği artırır? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Boşaltıma",
+      "Büyümeye (Yeni doku yapımına)",
+      "Isınmaya",
+      "Hareket etmeye"
+    ],
+    "c": 1,
+    "e": ""
+  },
+  {
+    "q": "Yağların brüt enerjisi yaklaşık 9.45 kcal/g iken, proteinlerin brüt enerjisi yaklaşık kaçtır? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "5.65 kcal/g",
+      "9.0 kcal/g",
+      "4.1 kcal/g",
+      "2.0 kcal/g"
+    ],
+    "c": 0,
+    "e": ""
+  },
+  {
+    "q": "Balık yemlerinde protein kaynağı olarak kullanılan \"Balık Unu\"nun en önemli tercih edilme sebebi aşağıdakilerden hangisidir? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Raf ömrünün sınırsız olması",
+      "Fiyatının çok ucuz olması",
+      "Esansiyel amino asit dengesinin mükemmel olması ve yüksek sindirilebilirliği",
+      "Sadece karbonhidrat içermesi"
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "Balık ununun kalitesini etkileyen en kritik işlem süreci aşağıdakilerden hangisidir? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Paketleme yöntemi",
+      "Kurutma sırasında uygulanan ısı derecesi ve süresi",
+      "Fabrikanın rengi",
+      "Balıkların avlandığı derinlik"
+    ],
+    "c": 1,
+    "e": ""
+  },
+  {
+    "q": "Bitkisel protein kaynakları (Örn: Soya küspesi) balık yemlerinde kullanılırken karşılaşılan en büyük engel nedir? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Balıkların bitkisel kokuyu sevmemesi",
+      "Suyun rengini bozmaları",
+      "Protein miktarının çok düşük olması",
+      "İçerdikleri \"Antinutrisyonel Faktörler\" (beslemeyi engelleyici maddeler)"
+    ],
+    "c": 3,
+    "e": ""
+  },
+  {
+    "q": "Metne göre, bitkisel hammaddelerdeki antinutrisyonel faktörlerin çoğunu etkisiz hale getirmek için uygulanan en yaygın yöntem nedir? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Vitamin eklemek",
+      "Işığı kapatmak",
+      "Isıl işlem (Pişirme/Ekstrüzyon)",
+      "Suyu dondurmak"
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "\"Yem rasyonu\" hazırlanırken dikkat edilmesi gereken \"Enerji/Protein Oranı\" dengesi bozulursa ne gerçekleşir? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Proteinler büyüme yerine enerji için yakılır (ekonomik kayıp) veya aşırı yağlanma görülür.",
+      "Balıkların rengi maviye döner.",
+      "Balıklar hiç yem yemez.",
+      "Su sıcaklığı aniden artar."
+    ],
+    "c": 0,
+    "e": ""
+  },
+  {
+    "q": "Yemlere eklenen \"Antioksidanlar\"ın temel görevi nedir? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Balıkları hastalıklardan korumak",
+      "Yemin tadını güzelleştirmek",
+      "Yemin suyun dibine batmasını sağlamak",
+      "Yemdeki yağların oksijenle temas ederek acılaşmasını (oksidasyonu) önlemek"
+    ],
+    "c": 3,
+    "e": ""
+  },
+  {
+    "q": "Balık yemlerinde kullanılan \"Bağlayıcı Maddeler\" (Binder) ne işe yarar? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Vitaminleri yok eder.",
+      "Yemin protein oranını yükseltir.",
+      "Balıkların birbirine bağlanmasını sağlar.",
+      "Yem peletinin su içinde dağılmadan kalma süresini (su dayanıklılığını) artırır."
+    ],
+    "c": 3,
+    "e": ""
+  },
+  {
+    "q": "Balık rasyonlarında kullanılan \"Sentetik Amino Asitler\" (Örn: L-Lizin, DL-Metiyonin) neden rasyona eklenir? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Bitkisel proteinlerdeki eksik amino asitleri tamamlayarak protein kalitesini artırmak için",
+      "Balığı uyutmak için",
+      "Yemi ağırlaştırmak için",
+      "Yemin rengini değiştirmek için"
+    ],
+    "c": 0,
+    "e": ""
+  },
+  {
+    "q": "Metne göre, bir yemin \"Lezzetliliği\" (Palatability) neyi etkiler? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Yemin fiyatını",
+      "Yemin besin değerini",
+      "Suyun pH değerini",
+      "Balığın yemi kabul etme ve tüketme hızını"
+    ],
+    "c": 3,
+    "e": ""
+  },
+  {
+    "q": "\"Pelet Yem\" ile \"Ekstrüde Yem\" arasındaki temel fiziksel fark nedir? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Ekstrüde yemler su yüzeyinde yüzebilir (floating), pelet yemler genellikle hızla batar.",
+      "Pelet yem vitamin içermez.",
+      "Pelet yem her zaman daha pahalıdır.",
+      "Ekstrüde yem sadece deniz suyunda kullanılır."
+    ],
+    "c": 0,
+    "e": ""
+  },
+  {
+    "q": "Yem maddelerinin analizinde kullanılan \"Ham Kül\" miktarı neyi ifade eder? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Yemdeki su miktarını",
+      "Yemdeki vitaminleri",
+      "Yemdeki toplam mineral madde miktarını",
+      "Yemin yanmayan kısmındaki proteini"
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "Balıklarda \"Yemleme Oranı\" (Feeding Rate) belirlenirken hangi faktör en kritiktir? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Tankın boyası",
+      "İşletme sahibinin yaşı",
+      "Su sıcaklığı ve balık canlı ağırlığı",
+      "Gökyüzünün bulutlu olması"
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "Metne göre, bozulmuş (okside olmuş) yağ içeren yemlerle beslenen balıklarda hangi vitaminin eksikliği tetiklenir? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Vitamin E",
+      "Vitamin C",
+      "Vitamin B12",
+      "Vitamin K"
+    ],
+    "c": 0,
+    "e": ""
+  },
+  {
+    "q": "Kanal yayınları üzerinde yapılan araştırmalara göre, aşağıdaki yağ kaynaklarından hangisiyle beslenen balıkların daha iyi büyüme ve yem değerlendirme oranına sahip olduğu gözlenmiştir? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Ayçiçeği yağı",
+      "Menhaden balık yağı (C20:5 n-3 ve C22:6 n-3 içeren)",
+      "Keten tohumu yağı",
+      "Pamuk yağı"
+    ],
+    "c": 1,
+    "e": ""
+  },
+  {
+    "q": "Ruminant (gevşiş getiren) hayvanların etlerinde n-3 yağ asitlerinin çok az düzeyde bulunmasının metinde belirtilen temel sebebi nedir? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Bu hayvanların hiç bitki yememesi",
+      "Selüloz sindirimi sırasında yemdeki (n-3) PUFA'ları parçalamaları",
+      "Vücut ısılarının çok yüksek olması",
+      "n-3 yağ asitlerinin bu hayvanlar için zehirli olması"
+    ],
+    "c": 1,
+    "e": ""
+  },
+  {
+    "q": "Yaygın olarak kullanılan bitki tohumlarının lipid içeriği hakkında metinde geçen genelleme aşağıdakilerden hangisidir? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Sadece doymuş yağ asidi içerirler.",
+      "n-3 yağ asitlerince çok zengindirler.",
+      "(n-6) PUFA'larca zengin olduklarından balıkların n-3 ihtiyacını yeterince karşılamazlar.",
+      "Hiç yağ içermezler."
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "Su organizmalarının beslenmesinde neden özellikle balık yağı veya balık ununda bulunan yağlar tercih edilmelidir? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Su organizmalarında bulunan lipidler daha çok \"n-3\" formundadır ve ihtiyaç bu yöndedir.",
+      "Balık yağı yemin suyun üstünde kalmasını sağlar.",
+      "Bu yağlar daha ucuzdur.",
+      "Bitkisel yağlar balıklarda sindirilemez."
+    ],
+    "c": 0,
+    "e": ""
+  },
+  {
+    "q": "Yağların brüt enerjisi 9.45 kcal/g olmasına rağmen, balıkların bu enerjiden yararlanma oranı (%) ve net enerji değeri metnin son sayfasında ne olarak verilmiştir? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "%100 yararlanma - 9.45 kcal enerji",
+      "%20 yararlanma - 2 kcal enerji",
+      "%50 yararlanma - 4.5 kcal enerji",
+      "%84 yararlanma - 8 kcal enerji"
+    ],
+    "c": 3,
+    "e": ""
+  },
+  {
+    "q": "Metnin son bölümündeki genellemelere göre, kısa zincirli PUFA'ların rasyondaki durumuyla ilgili hangi uyarı yapılmıştır? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Sadece tatlı su balıklarına verilmelidir.",
+      "Mümkün olduğunca fazla verilmelidir.",
+      "Fazla miktarda kısa zincirli PUFA vermemeye dikkat edilmelidir.",
+      "Sadece kış aylarında verilmelidir."
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "Balıklarda minerallerin solungaçlardan emilimi sırasında, suyun tuzluluğu ve pH düzeyi emilimi nasıl etkiler? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Sadece balığın iştahını artırır.",
+      "Sadece suyun rengini değiştirir.",
+      "Hiçbir etkisi yoktur.",
+      "Suyun mineral konsantrasyonu ve iyonik dengesi, pasif ve aktif taşıma hızını doğrudan belirler."
+    ],
+    "c": 3,
+    "e": ""
+  },
+  {
+    "q": "Vitamin E ve Selenyum arasındaki metinde vurgulanan \"sinerjik\" ilişki aşağıdakilerden hangisidir? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Sadece kemik gelişiminde rol oynarlar.",
+      "Sadece tatlı su balıklarında bulunurlar.",
+      "Her ikisi de farklı mekanizmalarla hücreyi oksidatif hasara karşı korur; biri eksikse diğeri bir dereceye kadar telafi edebilir.",
+      "Birbirlerinin etkisini yok ederler."
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "Balıklarda \"Kolin\" yetersizliğinde görülen \"boyun bölgesinde kısalma\" (Short-body dwarfism) hangi tür için spesifik bir belirti olarak kaydedilmiştir? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Gökkuşağı Alabalığı",
+      "Levrek",
+      "Sazan",
+      "Kanal Yayını"
+    ],
+    "c": 0,
+    "e": ""
+  },
+  {
+    "q": "Metne göre \"Kalsiyum/Fosfor oranı\", balıklarda memelilere göre neden daha esnektir? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Balıkların kemiği olmadığı için",
+      "Balıklar fosforu hiç kullanmadıkları için",
+      "Balıklar sadece protein yedikleri için",
+      "Balıklar kalsiyumun büyük kısmını sudan karşılayabildikleri için"
+    ],
+    "c": 3,
+    "e": ""
+  },
+  {
+    "q": "\"Vitamin B12\" (Siyanokobalamin) sentezi için balığın sindirim sisteminde hangi mineralin bulunması zorunludur? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Kobalt",
+      "Çinko",
+      "Bakır",
+      "Demir"
+    ],
+    "c": 0,
+    "e": ""
+  },
+  {
+    "q": "Yemlerde bulunan \"Fitat\" (Phytic acid) hangi mineralin emilimini ciddi oranda engeller? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Sodyum",
+      "Klor",
+      "Potasyum",
+      "Çinko ve Fosfor"
+    ],
+    "c": 3,
+    "e": ""
+  },
+  {
+    "q": "Metne göre, balıklarda \"Glutatyon Peroksidaz\" enziminin temel bileşeni olan ve hücreyi peroksitlerden koruyan mikro mineral hangisidir? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Flor",
+      "Demir",
+      "Selenyum",
+      "Mangan"
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "Balık rasyonlarında kullanılan \"Sentetik Antioksidanlar\" (Örn: Ethoxyquin, BHT, BHA) hangi vitaminin parçalanmasını önlemek için de eklenir? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Pantotenik Asit",
+      "Vitamin A ve Vitamin E",
+      "Vitamin B1",
+      "Vitamin B12"
+    ],
+    "c": 1,
+    "e": ""
+  },
+  {
+    "q": "Balıklarda sindirilen besinlerin kan yoluyla karaciğere taşındığı ana damar sistemi hangisidir? (Balık Besleme ve Yem Teknolojisi)",
+    "o": [
+      "Aort",
+      "Pulmoner Arter",
+      "Portal Ven Sistemi",
+      "Lenf Sistemi"
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "Aşağıdaki ülkeleri dünya su ürünleri ticaretindeki konumlarıyla eşleştiriniz.\nI. Çin             a) 24,6 Milyar ABD $ ile en büyük ithalatçı\nII. Avrupa Birliği   b) Dünya ihracatının %10'unu gerçekleştiren lider\nIII. Norveç        c) İhracatta Çin'den sonra gelen ilk ülkelerden biri",
+    "o": [
+      "I-a, II-b, III-c",
+      "I-b, II-a, III-c",
+      "I-c, II-b, III-a",
+      "I-b, II-c, III-a"
+    ],
+    "c": 1,
+    "e": ""
+  },
+  {
+    "q": "1960'lı yıllarda dünya genelinde 9,9 kg olan kişi başına su ürünleri tüketimi, 2010 yılında kaç kg'a yükselmiştir?",
+    "o": [
+      "18,6 kg",
+      "14,1 kg",
+      "12,5 kg",
+      "24,6 kg"
+    ],
+    "c": 0,
+    "e": ""
+  },
+  {
+    "q": "Su ürünleri sektörü 2008 yılında yaşanan finansal krizden nasıl etkilenmiştir?",
+    "o": [
+      "Talep artışı nedeniyle %10 büyüme yaşamıştır.",
+      "Diğer sektörlerden daha fazla etkilenerek tamamen durma noktasına gelmiştir.",
+      "Geniş bir talep azalması ile %12,5'luk bir düşme yaşamıştır.",
+      "Sadece avcılık sektörü etkilenmiş, perakende sektörü etkilenmemiştir."
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "Gelişmiş ülkelerin mevcut av filoları hakkındaki rasyonel yaklaşımı aşağıdakilerden hangisidir?",
+    "o": [
+      "Av miktarını artırmak için filo kapasitelerini büyütmek.",
+      "Filo kapasitelerini azaltarak daha küçük ve etkin filolara sahip olmak.",
+      "Üretimi durdurup sadece ithalata yönelmek.",
+      "Filo kapasitelerini sabit tutarak av yasaklarını kaldırmak."
+    ],
+    "c": 1,
+    "e": ""
+  },
+  {
+    "q": "TÜİK 2010 verilerine göre, su ürünleri avcılığında %63,95'lik pay ile en yüksek üretimin yapıldığı deniz aşağıdakilerden hangisidir?",
+    "o": [
+      "Doğu Karadeniz",
+      "Marmara",
+      "Ege",
+      "Batı Karadeniz"
+    ],
+    "c": 0,
+    "e": ""
+  },
+  {
+    "q": "Aşağıdakilerden hangisi su ürünleri sektöründe \"birincil üretim\" faaliyetlerine ilave olan iş kollarından biri değildir?",
+    "o": [
+      "Ağ imalatı",
+      "Buz üretim ve tedariki",
+      "Balıkçılık ve su ürünleri yetiştiriciliği",
+      "Gemi yapım ve bakımı"
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "Su ürünlerinde bulunan su miktarı ve su aktivitesi (a w ) ile ilgili aşağıdakilerden hangisi doğrudur?",
+    "o": [
+      "Taze balıklarda su aktivitesi genellikle 0.99 civarındadır ve mikroorganizma gelişimi için uygundur.",
+      "Su oranı arttıkça su aktivitesi (a w ) düşer.",
+      "Balıklarda su oranı mevsimsel olarak değişmez, sabittir.",
+      "Su aktivitesinin yüksek olması, ürünün raf ömrünü kendiliğinden uzatan bir faktördür."
+    ],
+    "c": 0,
+    "e": ""
+  },
+  {
+    "q": "Aşağıdaki balık eti protein gruplarını, toplam protein içindeki yaklaşık oranlarıyla eşleştiriniz.\nI. Miyofibriler Proteinler (Miyozin, Aktin)    a) %3 - %10\nII. Sarkoplazmik Proteinler (Miyojen, Globulin) b) %65 - %75\nIII. Stroma Proteinleri (Kollajen, Elastin)    c) %20 - %30",
+    "o": [
+      "I-b, II-a, III-c",
+      "I-a, II-b, III-c",
+      "I-c, II-a, III-b",
+      "I-b, II-c, III-a"
+    ],
+    "c": 3,
+    "e": ""
+  },
+  {
+    "q": "Balık proteinlerinin besleyici değerini yüksek kılan ve vücut tarafından sentezlenemeyen amino asit grubu aşağıdakilerden hangisidir?",
+    "o": [
+      "Non-esansiyel amino asitler",
+      "Esansiyel (elzem) amino asitler",
+      "Doymuş yağ asitleri",
+      "Suda çözünen vitaminler"
+    ],
+    "c": 1,
+    "e": ""
+  },
+  {
+    "q": "Su ürünleri yağları (lipitler) hakkında verilen bilgilerden hangisi yanlıştır?",
+    "o": [
+      "Su ürünleri, uzun zincirli çoklu doymamış yağ asitleri (PUFA) bakımından zengindir.",
+      "EPA ve DHA, su ürünlerinde bulunan önemli omega-3 yağ asitleridir.",
+      "Yağlı balıklar, yağda çözünen A ve D vitaminleri bakımından zengin bir kaynaktır.",
+      "Balıklarda yağ oranı arttıkça, su oranında da paralel bir artış gözlenir."
+    ],
+    "c": 3,
+    "e": ""
+  },
+  {
+    "q": "Balık etinde karbonhidrat miktarının %1’den az olması ve glikojenin laktik aside dönüşmesi süreciyle ilgili aşağıdakilerden hangisi söylenebilir?",
+    "o": [
+      "Ölüm sonrası laktik asit oluşumu balığın pH değerini 4.0 seviyesine kadar indirir.",
+      "Balık eti yüksek miktarda şeker içerdiği için hızlı bozulur.",
+      "Düşük karbonhidrat oranı, balık etinin pH değerinin çok fazla düşmesini engeller.",
+      "Glikojen miktarı sadece tatlı su balıklarında %10'un üzerindedir."
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "Deniz balıklarını tatlı su balıklarından ayıran en temel mineral farkı aşağıdakilerden hangisidir?",
+    "o": [
+      "Daha fazla kalsiyum içermeleri.",
+      "Daha yüksek oranda iyot içermeleri.",
+      "Sadece magnezyum içermeleri.",
+      "Demir içeriğinin deniz balıklarında hiç bulunmaması."
+    ],
+    "c": 1,
+    "e": ""
+  },
+  {
+    "q": "Balıklarda ölümden hemen sonra başlayan ve kasların sertleşmesiyle sonuçlanan sürece ne ad verilir?",
+    "o": [
+      "Rigor Mortis",
+      "Lipid Oksidasyonu",
+      "Otoliz",
+      "Mikrobiyolojik Çürüme"
+    ],
+    "c": 0,
+    "e": ""
+  },
+  {
+    "q": "Aşağıdaki post-mortem aşamaları, kas yapısındaki fiziksel durumlarla eşleştiriniz.\nI. Pre-rigor    a) Kasların yumuşaması ve esnekliğin geri kazanılması\nII. Rigor       b) Kasların tamamen yumuşak ve bükülebilir olması\nIII. Post-rigor  c) Kasların kasılarak sertleşmesi ve bükülememesi",
+    "o": [
+      "I-b, II-a, III-c",
+      "I-a, II-b, III-c",
+      "I-c, II-a, III-b",
+      "I-b, II-c, III-a"
+    ],
+    "c": 3,
+    "e": ""
+  },
+  {
+    "q": "Balıklarda \"Rigor Mortis\" süresini kısaltan ve et kalitesini olumsuz etkileyen temel faktör aşağıdakilerden hangisidir?",
+    "o": [
+      "Balığın çok küçük boyutlu olması",
+      "Balığın çok düşük sıcaklıklarda muhafaza edilmesi",
+      "Balığın ölümden önce aşırı yorulması ve strese girmesi",
+      "Su sıcaklığının düşük olması"
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "Ölüm sonrası kaslarda ATP’nin tükenmesiyle birlikte glikojenin parçalanması sonucu hangi madde birikir ve pH düşer?",
+    "o": [
+      "Laktik Asit",
+      "Amonyak",
+      "Trimetilamin (TMA)",
+      "Histamin"
+    ],
+    "c": 0,
+    "e": ""
+  },
+  {
+    "q": "Tazelik analizinde \"Duyusal Muayene\" yapılırken, taze bir balığın gözleri ve solungaçları nasıl olmalıdır?",
+    "o": [
+      "Gözler çökmüş, solungaçlar kahverengi",
+      "Gözler donuk, solungaçlar sümüksü ve gri",
+      "Gözler parlak ve dışa bombeli, solungaçlar canlı kırmızı",
+      "Göz bebekleri beyazlamış, solungaç kokusu keskin"
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "Balıklarda enzimatik bozulma (otoliz) sürecinde, proteinlerin parçalanması sonucu ortaya çıkan ve bayatlamanın göstergesi olan ilk belirti hangisidir?",
+    "o": [
+      "Et dokusunun sıkılaşması",
+      "Dokuların yumuşaması ve karın bölgesinde patlamalar",
+      "Deride renk parlaklığının artması",
+      "Su aktivitesinin (a w ) sıfıra inmesi"
+    ],
+    "c": 1,
+    "e": ""
+  },
+  {
+    "q": "Kabuklu deniz ürünlerinde bulunan toksinler, kimyasal özelliklerine göre hangi iki ana sınıfa ayrılırlar?",
+    "o": [
+      "Asidik ve Bazik Toksinler",
+      "Protein ve Karbonhidrat Toksinleri",
+      "Termal ve Kimyasal Toksinler",
+      "Hidrofilik ve Lipofilik Toksinler"
+    ],
+    "c": 3,
+    "e": ""
+  },
+  {
+    "q": "Aşağıdaki zehirlenme türlerini, bunlara neden olan kimyasal maddelerle eşleştiriniz.\nI. ASP (Amnezik Kabuklu Zehirlenmesi)    a) Saksitoksinler\nII. PSP (Paralitik Kabuklu Zehirlenmesi)   b) Brevetoksinler\nIII. NSP (Nörolojik Kabuklu Zehirlenmesi)  c) Domoik Asit",
+    "o": [
+      "I-c, II-a, III-b",
+      "I-a, II-b, III-c",
+      "I-b, II-c, III-a",
+      "I-c, II-b, III-a"
+    ],
+    "c": 0,
+    "e": ""
+  },
+  {
+    "q": "Domoik Asit (DA), insan vücudunda öncelikle hangi bölgeyi etkileyerek kısa süreli bellek kaybına neden olur?",
+    "o": [
+      "Karaciğer hepatositleri",
+      "Gastrointestinal mukoza",
+      "Hipokampus (Medial temporal lob)",
+      "Akciğer alveolleri"
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "Avrupa Birliği (AB) mevzuatına göre, kabuklu deniz ürünlerinde Domoik Asit (DA) için belirlenen maksimum limit ne kadardır?",
+    "o": [
+      "160 μg/kg",
+      "20 mg DA/kg",
+      "1 mg/kg",
+      "4.5 mg DA/kg"
+    ],
+    "c": 1,
+    "e": ""
+  },
+  {
+    "q": "Okadaik asit (OA) grubu toksinlerin hücre düzeyindeki temel etki mekanizması aşağıdakilerden hangisidir?",
+    "o": [
+      "Sodyum kanallarını tamamen bloke etmek.",
+      "Voltaj kapılı kalsiyum kanallarını açmak.",
+      "ATP sentezini durdurarak hücre ölümüne yol açmak.",
+      "Serin ve treonin fosfatazları (PP1 ve PP2A) engelleyerek proteinlerin hiperfosforilasyonuna neden olmak."
+    ],
+    "c": 3,
+    "e": ""
+  },
+  {
+    "q": "\"Tetrodotoksin\" (TTX) isimli biyotoksin, özellikle hangi balık türü tarafından üretilmesiyle bilinir?",
+    "o": [
+      "Balon Balığı",
+      "Mavi Midye",
+      "Norveç Somonu",
+      "Doğu Karadeniz Hamsisi"
+    ],
+    "c": 0,
+    "e": ""
+  },
+  {
+    "q": "İşletmelerde temizlik ve dezenfeksiyon işlemleri yapılırken izlenmesi gereken doğru sıralama aşağıdakilerden hangisidir?",
+    "o": [
+      "Kaba temizlik – Dezenfeksiyon – Durulama – Kurutma",
+      "Dezenfeksiyon – Durulama – Kaba temizlik – Kurutma",
+      "Durulama – Dezenfeksiyon – Temizlik – Kurutma",
+      "Kaba temizlik – Temizlik – Durulama – Kurutma – Dezenfeksiyon – Durulama – Kurutma"
+    ],
+    "c": 3,
+    "e": ""
+  },
+  {
+    "q": "Aşağıdaki tanımları gıda güvenliği literatüründeki karşılıklarıyla eşleştiriniz.\nI. Bulaşma (Kontaminasyon)  a) Gıdanın geriye dönük takibi ve her aşamasının izlenmesi\nII. Dezenfeksiyon          b) Patojen unsurlar veya yabancı maddelerle meydana gelen olumsuz etkilenme\nIII. İzlenebilirlik         c) Kimyasal veya fiziksel yöntemlerle kirlilik etmenlerinden arındırma işlemi",
+    "o": [
+      "I-a, II-b, III-c",
+      "I-b, II-c, III-a",
+      "I-c, II-a, III-b",
+      "I-b, II-a, III-c"
+    ],
+    "c": 1,
+    "e": ""
+  },
+  {
+    "q": "İşletmede kullanılan bıçakların temizliği için belirlenen standart sıcaklık aralığı aşağıdakilerden hangisidir?",
+    "o": [
+      "70-80°C",
+      "60-70°C",
+      "40-50°C",
+      "90-100°C"
+    ],
+    "c": 0,
+    "e": ""
+  },
+  {
+    "q": "HACCP (Tehlike Analizi ve Kritik Kontrol Noktaları) sistemi ilk olarak hangi amaçla ve hangi kurum tarafından geliştirilmiştir?",
+    "o": [
+      "Avrupa Birliği balıkçılık kotasını belirlemek için (FAO)",
+      "Türkiye'de su ürünleri hallerini denetlemek için (TÜİK)",
+      "1960'larda Amerikan uzay programı (NASA) için astronot yiyeceği üretmek amacıyla",
+      "Modern restoran zincirlerinde standart sağlamak amacıyla (ISO)"
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "ISO 22000 standardı ile ilgili aşağıda verilen bilgilerden hangisi yanlıştır?",
+    "o": [
+      "ISO 22000 bir HACCP standardı değil, bir Gıda Güvenliği Yönetim Sistemi standardıdır.",
+      "Sadece son ürün testi ile gıda güvenliğini sağlamayı hedefler.",
+      "Denetlenebilir formatta yazılmıştır ve yönetim sorumluluklarını tanımlar.",
+      "Codex Alimentarius HACCP standartı ile uyumludur."
+    ],
+    "c": 1,
+    "e": ""
+  },
+  {
+    "q": "HACCP sisteminin temelini oluşturan ve \"neyin yanlış olabileceğini\" araştıran mühendislik sistemi (FMECA) aşağıdakilerden hangisidir?",
+    "o": [
+      "Kalibrasyon ve Bakım Analizi",
+      "Akış Şeması Doğrulama Sistemi",
+      "Kritik Sınır Belirleme Testi",
+      "Başarısızlık Modu ve Etki Analizi"
+    ],
+    "c": 3,
+    "e": ""
+  },
+  {
+    "q": "İşletmede kullanılan alet ve ekipmanların (makineler, teraziler, işleme bantları vb.) güvenilirliğini sağlamak amacıyla yürütülen faaliyetlerin kayıt altına alınmasıyla ilgili aşağıdakilerden hangisi yanlıştır?",
+    "o": [
+      "Satın alınan her ekipmanın kullanım ve bakım kılavuzları muhafaza edilmelidir.",
+      "Periyodik bakım ve kalibrasyon programı oluşturulmalıdır.",
+      "Bakım personeli üretim alanına girerken hijyen kurallarından muaftır.",
+      "Uygunsuzluk tespit edildiğinde tanımlanmış düzeltici faaliyetler uygulanmalıdır."
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "Su ürünleri işleme tesislerinde kullanılan suyun niteliği hangi resmi mevzuatın kriterlerini karşılamak zorundadır?",
+    "o": [
+      "Su Ürünleri Avcılığı Tebliği.",
+      "İnsani Tüketim Amaçlı Sular Hakkında Yönetmelik.",
+      "Türk Gıda Kodeksi Katkı Maddeleri Yönetmeliği.",
+      "Uluslararası Denizcilik Örgütü (IMO) Standartları."
+    ],
+    "c": 1,
+    "e": ""
+  },
+  {
+    "q": "İşletmenin temizlik ve dezenfeksiyon planında aşağıdakilerden hangisinin belirtilmesi zorunlu değildir?",
+    "o": [
+      "Temizleme sıklığı ve uygulanacak yöntem.",
+      "Kullanılacak kimyasalların konsantrasyonları.",
+      "İşlemi gerçekleştirecek sorumlu kişinin adı.",
+      "Ekipmanların piyasa değeri ve satın alım tarihi."
+    ],
+    "c": 3,
+    "e": ""
+  },
+  {
+    "q": "Temizlik ve dezenfeksiyon maddelerinin kullanımı ve depolanmasıyla ilgili doğru uygulama aşağıdakilerden hangisidir?",
+    "o": [
+      "Daima açıkça anlaşılabilecek şekilde işaretlenmeli ve gıda kaplarına asla doldurulmamalıdır.",
+      "Üzeri etiketsiz kaplara doldurularak hızlıca tüketilmelidir.",
+      "Gıda maddeleriyle aynı kapalı alanda saklanmalıdır.",
+      "Sadece üretim bittikten sonra, ortamdaki su ürünleri uzaklaştırılmadan uygulanmalıdır."
+    ],
+    "c": 0,
+    "e": ""
+  },
+  {
+    "q": "İşletmede temizlik ve dezenfeksiyon işlemlerine başlanmadan önce yapılması gereken ilk ve en kritik hazırlık adımı nedir?",
+    "o": [
+      "Dezenfektan dozunu iki katına çıkarmak.",
+      "Zeminlerin kurumasını beklemek.",
+      "Su ürünlerini ortamdan uzaklaştırmak.",
+      "Makinelerin elektrik bağlantısını kesmek."
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "ISO 22000 Gıda Güvenliği Yönetim Sistemi'nin yapısı içerisinde yer alan hiyerarşik sıralama aşağıdakilerden hangisinde büyükten küçüğe doğru verilmiştir?",
+    "o": [
+      "ISO 22000 > HACCP > Ön Gereksinim Programları.",
+      "HACCP > ISO 22000 > Ön Gereksinim Programları.",
+      "Ön Gereksinim Programları > HACCP > ISO 22000.",
+      "ISO 22000 > Ön Gereksinim Programları > HACCP."
+    ],
+    "c": 0,
+    "e": ""
+  },
+  {
+    "q": "Gıda mevzuatı şartlarına uygunluğun doğrulanması amacıyla yapılan inceleme faaliyetine ne ad verilir?",
+    "o": [
+      "Validasyon",
+      "Kontaminasyon",
+      "İzlenebilirlik",
+      "Denetim"
+    ],
+    "c": 3,
+    "e": ""
+  },
+  {
+    "q": "Aşağıdaki gıda güvenliği kavramlarını tanımlarıyla eşleştiriniz.\nI. Doğrulama    a) Gıdanın her aşamasının geriye dönük takip edilebilmesi\nII. Gıda Hijyeni  b) Şartların yerine getirildiğinin tarafsız kanıtlarla incelenmesi\nIII. İzlenebilirlik c) Tehlikelerin kontrolü ve gıdanın tüketime uygunluk şartları",
+    "o": [
+      "I-c, II-a, III-b",
+      "I-a, II-b, III-c",
+      "I-b, II-c, III-a",
+      "I-b, II-a, III-c"
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "ISO 22000 Gıda Güvenliği Yönetim Sistemi'nin başarısı için \"interaktif iletişim\" kimler arasında kurulmalıdır?",
+    "o": [
+      "Sadece işletme içi personel arasında.",
+      "Tedarikçiler, müşteriler ve yasal otoriteler dahil tüm gıda zinciri boyunca.",
+      "Sadece resmi denetçiler ve yönetim arasında.",
+      "Sadece gıda güvenliği ekip lideri ve işletme sahibi arasında."
+    ],
+    "c": 1,
+    "e": ""
+  },
+  {
+    "q": "ISO 22000 standardı, \"geçerli kılma\" (validasyon) işlemini hangi işlemden kesin olarak ayırır?",
+    "o": [
+      "Doğrulama",
+      "Denetim",
+      "Kalibrasyon",
+      "Dokümantasyon"
+    ],
+    "c": 0,
+    "e": ""
+  },
+  {
+    "q": "Gıda güvenliği yaklaşımında \"ölçülebilir hedefler\" (measurable objectives) belirlenmesi hangi temel bileşenin parçasıdır?",
+    "o": [
+      "Ön Gereksinim Programları",
+      "Tehlike Analizi",
+      "Akış Şeması",
+      "Gıda Güvenliği Politikası"
+    ],
+    "c": 3,
+    "e": ""
+  },
+  {
+    "q": "Su ürünlerinin doğrudan insan tüketimine sunulmak üzere satışının yapıldığı dükkanlar, AVM’ler ve semt pazarları mevzuatta hangi isimle tanımlanır?",
+    "o": [
+      "Su ürünleri toptan satış yeri",
+      "Perakende satış yeri",
+      "Birincil üretim sahası",
+      "Su ürünleri hali"
+    ],
+    "c": 1,
+    "e": ""
+  },
+  {
+    "q": "Bir tehlikenin kontrol altına alınabildiği ve gıda güvenliği açısından bir riskin önlenmesi, ortadan kaldırılması veya kabul edilebilir düzeye indirilmesi için temel olan aşamaya ne ad verilir?",
+    "o": [
+      "Kritik Kontrol Noktası (CCP)",
+      "Operasyonel Ön Gereksinim Programı (oPRP)",
+      "Tehlike Analizi",
+      "Akış Şeması Doğrulaması"
+    ],
+    "c": 0,
+    "e": ""
+  },
+  {
+    "q": "Aşağıdaki HACCP terimlerini uygulama amaçlarıyla eşleştiriniz.\nI. Kritik Sınır   a) CCP’nin kontrol altında olup olmadığını saptamak için yapılan ölçümler\nII. İzleme         b) Kabul edilebilirliğin kabul edilemezlikten ayrıldığı kriter\nIII. Karar Ağacı   c) Bir aşamanın CCP olup olmadığını belirlemek için kullanılan mantıksal sorular dizisi",
+    "o": [
+      "I-c, II-a, III-b",
+      "I-a, II-b, III-c",
+      "I-b, II-a, III-c",
+      "I-b, II-c, III-a"
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "Su ürünleri işleme tesislerinde bir parametrenin \"Kritik Sınır\" olarak kabul edilebilmesi için sahip olması gereken en önemli özellik aşağıdakilerden hangisidir?",
+    "o": [
+      "Şirket CEO'su tarafından onaylanmış olması.",
+      "Hızlı sonuç veren ve gözlenebilir/ölçülebilir bir parametre olması.",
+      "Sadece duyusal verilere (koku, renk) dayanması.",
+      "Karmaşık laboratuvar analizleri gerektirmesi."
+    ],
+    "c": 1,
+    "e": ""
+  },
+  {
+    "q": "İzleme sonuçları bir Kritik Kontrol Noktasının (CCP) kontrolden çıktığını gösterdiğinde yapılması gereken işlem aşağıdakilerden hangisidir?",
+    "o": [
+      "İzleme sıklığını azaltmak.",
+      "Akış şemasını yeniden çizmek.",
+      "Üretimi hiçbir müdahale yapmadan bitirmek.",
+      "Düzeltici faaliyetleri (Corrective Actions) başlatmak."
+    ],
+    "c": 3,
+    "e": ""
+  },
+  {
+    "q": "Dondurulmuş su ürünlerinin muhafaza edildiği depolarda, ürün merkez sıcaklığı ve depo sıcaklığı en fazla ne kadar olmalıdır?",
+    "o": [
+      "0°C",
+      "-5°C",
+      "-18°C (veya daha soğuk)",
+      "-12°C"
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "HACCP sisteminin 7. prensibi olan \"Kayıt Tutma ve Dokümantasyon\" kapsamında aşağıdakilerden hangisinin saklanması zorunlu değildir?",
+    "o": [
+      "Kritik kontrol noktası izleme kayıtları.",
+      "Personel maaş bordroları ve tatil planları.",
+      "Düzeltici faaliyet raporları.",
+      "Temizlik ve dezenfeksiyon takip formları."
+    ],
+    "c": 1,
+    "e": ""
+  },
+  {
+    "q": "Su ürünleri işleme tesislerinde zeminlerin su birikmesini önleyecek şekilde drenaj kanallarına doğru sahip olması gereken minimum eğim ne kadar olmalıdır?",
+    "o": [
+      "%1",
+      "%10",
+      "%5",
+      "%2"
+    ],
+    "c": 3,
+    "e": ""
+  },
+  {
+    "q": "Aşağıdaki işletme bölümlerini, hijyenik tasarım gereklilikleriyle eşleştiriniz.\nI. Duvarlar   a) Yoğunlaşmayı ve küf gelişimini önleyecek yapıda, açık renkli olmalı\nII. Tavanlar   b) Su geçirmeyen, aşınmaya dayanıklı ve kolay temizlenebilir olmalı\nIII. Köşeler   c) Kir birikmesini önlemek için iç bükey (yuvarlatılmış) olmalı",
+    "o": [
+      "I-b, II-a, III-c",
+      "I-a, II-b, III-c",
+      "I-c, II-a, III-b",
+      "I-b, II-c, III-a"
+    ],
+    "c": 0,
+    "e": ""
+  },
+  {
+    "q": "İşletme içerisinde \"çapraz bulaşmayı\" (cross-contamination) önlemek için ürün akış yönü nasıl planlanmalıdır?",
+    "o": [
+      "Kirli alandan temiz alana doğru kesişen yollarla.",
+      "Hammadde girişi ile son ürün çıkışı aynı kapıdan olacak şekilde.",
+      "Hammaddeden son ürüne doğru, geri dönüşsüz ve doğrusal bir hat üzerinde.",
+      "Personel ve ürün trafiği aynı dar koridorda birleşecek şekilde."
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "İşletme genelinde aydınlatma ile ilgili alınan güvenlik önlemleri kapsamında, lambaların üzerinde bulunması gereken koruyucu düzenek neyi amaçlar?",
+    "o": [
+      "Patlama durumunda cam parçalarının gıdaya karışmasını önlemeyi.",
+      "Elektrik tasarrufu sağlamayı.",
+      "Balık etinin renginin daha parlak görünmesini sağlamayı.",
+      "Ortam sıcaklığını sabit tutmayı."
+    ],
+    "c": 0,
+    "e": ""
+  },
+  {
+    "q": "Su ürünleri işleme alanlarında havalandırma sisteminin hava akış yönü nasıl ayarlanmalıdır?",
+    "o": [
+      "Havalandırma sadece koku giderme amaçlıdır, yönü önemli değildir.",
+      "Kirli alandan temiz alana doğru.",
+      "Sadece dışarıdan içeriye doğru sabit bir basınçla.",
+      "Temiz alandan (paketleme/işleme) kirli alana (hammadde/atık) doğru."
+    ],
+    "c": 3,
+    "e": ""
+  },
+  {
+    "q": "Personel soyunma odaları ve tuvaletlerin konumu ile ilgili en kritik hijyen kuralı aşağıdakilerden hangisidir?",
+    "o": [
+      "Üretim alanının tam merkezinde yer almalıdır.",
+      "Kapıları doğrudan üretim ve işleme alanına açılmamalıdır.",
+      "Yemekhane ile bitişik ve ortak girişli olmalıdır.",
+      "Sadece dışarıdan girişi olmalı, içeriden erişim engellenmelidir."
+    ],
+    "c": 1,
+    "e": ""
+  },
+  {
+    "q": "Havalandırma sistemlerinde mikrobiyolojik bulaşmayı engellemek amacıyla cihazlara takılabilecek özel donanım aşağıdakilerden hangisidir?",
+    "o": [
+      "Biyolojik filtre",
+      "Karbon filtre",
+      "Elektrostatik tutucu",
+      "Su perdesi"
+    ],
+    "c": 0,
+    "e": ""
+  },
+  {
+    "q": "Temizlik ve dezenfeksiyon maddelerinin işletme içerisindeki muhafazasıyla ilgili aşağıdakilerden hangisi doğrudur?",
+    "o": [
+      "Su ürünleriyle aynı depoda, alt raflarda saklanabilirler.",
+      "Üretim hattındaki boş kaplara doldurularak kolay erişim sağlanmalıdır.",
+      "Kapalı depolarda tutulmalı ve her birinin üzerinde tanımlı etiketi bulunmalıdır.",
+      "Makine bakım yağları ve gıda katkı maddeleri ile aynı rafta saklanmalıdır."
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "Su ürünleri işleme hattında temizliği ve dezenfeksiyonu güç olduğu için kullanılmaması gereken malzeme aşağıdakilerden hangisidir?",
+    "o": [
+      "Gıdaya uygun plastik",
+      "Tahta palet veya tahta kasa",
+      "Paslanmaz çelik",
+      "Seramik yüzey"
+    ],
+    "c": 1,
+    "e": ""
+  },
+  {
+    "q": "İşletmede kullanılan tüm alet ve ekipmanların sahip olması gereken temel özellikler arasında aşağıdakilerden hangisi yer almaz?",
+    "o": [
+      "Pürüzsüz ve paslanmayan malzemeden yapılmış olması.",
+      "Kolay temizlenebilir ve dezenfekte edilebilir olması.",
+      "Isı, buhar ve asit gibi maddelere karşı dayanıklı olması.",
+      "Estetik görünüm için girintili çıkıntılı dekoratif yüzeylere sahip olması."
+    ],
+    "c": 3,
+    "e": ""
+  },
+  {
+    "q": "İşletmenin ilgili bölümlerinde teknik ve proses gereği bulunması gereken, gıda güvenliği açısından \"sürekli kayıt veren\" cihazlar neleri ölçmelidir?",
+    "o": [
+      "İşletme cirosu ve personel sayısını.",
+      "Ortamdaki gürültü seviyesini.",
+      "Basınç ve sıcaklık değerlerini.",
+      "Üretilen balıkların tür çeşitliliğini."
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "Temizlik gereçleri (fırçalar, çekpaslar vb.) ve kimyasalların depolanmasıyla ilgili aşağıda verilen bilgilerden hangisi çapraz bulaşmayı önlemek için gereklidir?",
+    "o": [
+      "Hepsi aynı büyük kapta karıştırılarak hazır bekletilmelidir.",
+      "Temizlik maddeleri gıda maddelerinden tamamen bağımsız, ayrı bir yerde saklanmalıdır.",
+      "Sadece ana üretim kapısı girişinde, açıkta bulundurulmalıdır.",
+      "Sadece haftalık temizlik günlerinde depodan çıkarılmalıdır."
+    ],
+    "c": 1,
+    "e": ""
+  },
+  {
+    "q": "Su ürünleri işleme tesislerinde çalışan personelin sağlık kontrolleriyle ilgili aşağıdakilerden hangisi gıda güvenliği açısından zorunludur?",
+    "o": [
+      "Personelin haftada bir kez kan vermesi.",
+      "Sadece yönetim kadrosunun sağlık kontrolünden geçmesi.",
+      "Personelin sadece işe girişte tek seferlik muayene olması.",
+      "Bulaşıcı bir hastalığı veya açık yarası olan personelin üretim alanından uzaklaştırılması."
+    ],
+    "c": 3,
+    "e": ""
+  },
+  {
+    "q": "Aşağıdaki personel hijyeni kurallarını uygulama nedenleriyle eşleştiriniz.\nI. Bone kullanımı      a) Ter ve mikroorganizmaların gıdaya geçişini önlemek\nII. Maske kullanımı    b) Saç ve kepeklerin ürünlere düşmesini engellemek\nIII. Kolluk ve Önlük   c) Nefes yoluyla yayılan damlacık enfeksiyonunu önlemek",
+    "o": [
+      "I-c, II-a, III-b",
+      "I-a, II-b, III-c",
+      "I-b, II-c, III-a",
+      "I-b, II-a, III-c"
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "İşletme personelinin el yıkama lavabolarında bulunması gereken donanımlar arasında aşağıdakilerden hangisi hijyenik açıdan yanlıştır?",
+    "o": [
+      "Tekrar kullanılabilir, ortak kumaş havlular.",
+      "Fotoselli veya pedallı (el temassız) musluk sistemleri.",
+      "Sıcak ve soğuk su çıkışı olan musluklar.",
+      "Dezenfektanlı sıvı sabun ve tek kullanımlık kağıt havlular."
+    ],
+    "c": 0,
+    "e": ""
+  },
+  {
+    "q": "İşletme içerisinde personel hareketliliği planlanırken çapraz bulaşmayı önlemek için hangisi uygulanmalıdır?",
+    "o": [
+      "Temiz alanda (paketleme) çalışan personel, mola saatlerinde kirli alana (atık/hammadde) serbestçe geçebilmelidir.",
+      "İş kıyafetleri dışarıda da giyilerek eve gidilip gelinmelidir.",
+      "Personel, farklı hijyen seviyesindeki bölümler arasında geçiş yaparken dezenfektanlı paspas ve el dezenfeksiyonu kullanmalıdır.",
+      "Ziyaretçiler hiçbir hijyen kuralına uymadan üretim alanını gezebilmelidir."
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "İşletme atıklarının (balık kafası, kılçık, iç organ vb.) uzaklaştırılmasıyla ilgili doğru uygulama aşağıdakilerden hangisidir?",
+    "o": [
+      "Atıklar işleme alanında, ağzı açık kaplarda biriktirilmelidir.",
+      "Atık kapları kolay temizlenebilir, sızdırmaz ve kapaklı olmalı; günlük olarak boşaltılmalıdır.",
+      "Atıklar haftada bir kez tesis dışına çıkarılmalıdır.",
+      "Atık kapları gıda taşıma kasalarıyla aynı renkte olmalıdır."
+    ],
+    "c": 1,
+    "e": ""
+  },
+  {
+    "q": "Personelin iş yerinde uyması gereken \"kişisel takı\" kuralı aşağıdakilerden hangisidir?",
+    "o": [
+      "Alyans dahil tüm takılar, saatler ve küpeler fiziksel kontaminasyon riski nedeniyle yasaklanmalıdır.",
+      "Sadece altın takılar serbesttir.",
+      "Sadece görünmeyen takılar (kolye vb.) takılabilir.",
+      "Takı takmak personelin kendi tercihine bırakılmalıdır."
+    ],
+    "c": 0,
+    "e": ""
+  },
+  {
+    "q": "İşletmede haşere ve kemirgenlerle (böcek, fare vb.) mücadele kapsamında \"önleyici tedbirler\" arasında aşağıdakilerden hangisi yer almaz?",
+    "o": [
+      "Pencerelere ince gözenekli, temizlenebilir sinekliklerin takılması.",
+      "Kapı altlarındaki boşlukların kemirgen geçişini engelleyecek şekilde kapatılması.",
+      "Haşerelerin yerleşmesini önlemek için duvar çatlaklarının onarılması.",
+      "Haşereleri öldürmek için üretim alanında açıkta zehirli yemler bulundurulması."
+    ],
+    "c": 3,
+    "e": ""
+  },
+  {
+    "q": "İşletme içerisinde kullanılan ilaçlama kimyasalları (pestisitler) ile ilgili aşağıdaki eşleştirmelerden hangisi doğrudur?\nI. Saklama Alanı      a) Sadece yetkili/profesyonel personel tarafından\nII. Uygulama Yetkisi  b) Orijinal ambalajında ve gıdadan tamamen ayrı kilitli alanda\nIII. Kayıt Tutma      c) Uygulama tarihi, kullanılan ilaç ve dozajın belgelenmesi",
+    "o": [
+      "I-b, II-a, III-c",
+      "I-a, II-b, III-c",
+      "I-c, II-a, III-b",
+      "I-b, II-c, III-a"
+    ],
+    "c": 0,
+    "e": ""
+  },
+  {
+    "q": "İşletme binasının dış çevresinde kemirgen kontrolü amacıyla yerleştirilen \"yem istasyonları\" ile ilgili en önemli kural nedir?",
+    "o": [
+      "İstasyonlar üretim bandının hemen altına yerleştirilmelidir.",
+      "İstasyonların içi her gün farklı bir kimyasal ile doldurulmalıdır.",
+      "İstasyonlar sabitlenmiş olmalı, numaralandırılmalı ve bir yerleşim planı üzerinde gösterilmelidir.",
+      "İstasyonlar sadece balık sevkiyatı sırasında kapı önüne konulmalıdır."
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "İşletmede \"EFK\" (Elektrikli Sinek Öldürücü) cihazlarının konumuyla ilgili hijyenik kural aşağıdakilerden hangisidir?",
+    "o": [
+      "Doğrudan açık gıdanın ve işleme tezgahının tam üzerine asılmalıdır.",
+      "Ölen sinek parçalarının gıdaya düşmemesi için gıdanın bulunduğu hattın uzağına yerleştirilmelidir.",
+      "Işık çekmesi için pencere camının tam karşısına yerleştirilmelidir.",
+      "Cihazlar sadece personel dinlenme odalarında bulunmalıdır."
+    ],
+    "c": 1,
+    "e": ""
+  },
+  {
+    "q": "Su ürünleri işletmelerinde kullanılan ilaçların \"Gıda Güvenliği\" üzerindeki en büyük riski nedir?",
+    "o": [
+      "İlaçlama sonrası personelin daha hızlı çalışması.",
+      "İlaçların balığın tadını güzelleştirmesi.",
+      "İlaçların balığın rengini değiştirmesi.",
+      "Kimyasal kontaminasyon sonucu son üründe ilaç kalıntısı kalması."
+    ],
+    "c": 3,
+    "e": ""
+  },
+  {
+    "q": "İşletme denetimlerinde, zararlı mücadelesinin etkinliğini kanıtlamak için sunulması gereken temel doküman hangisidir?",
+    "o": [
+      "Elektrik faturaları.",
+      "Güncel haşere mücadele planı ve servis raporları.",
+      "Personel maaş listesi.",
+      "Hammadde satın alma faturaları."
+    ],
+    "c": 1,
+    "e": ""
+  },
+  {
+    "q": "Aşağıdaki balık gruplarını, gereksinim duydukları optimum su sıcaklık değerleriyle eşleştiriniz.\nI. Soğuk su balıkları\nII. Ilık su balıkları\nIII. Sıcak su balıkları\na) ≥25 °C\nb) ≤15 °C\nc) 15−24 °C (Su Kalitesi)",
+    "o": [
+      "I-b, II-c, III-a",
+      "I-a, II-b, III-c",
+      "I-c, II-b, III-a",
+      "I-a, II-c, III-b"
+    ],
+    "c": 0,
+    "e": ""
+  },
+  {
+    "q": "Balıklarda termal (ısısal) sıcaklık şoku ve ölüme neden olan \"bir dakikadaki kritik sıcaklık değişim eşiği\" aşağıdakilerden hangisidir? (Su Kalitesi)",
+    "o": [
+      "0,5 °C",
+      "0,9 °C",
+      "2,0 °C",
+      "5,0 °C"
+    ],
+    "c": 3,
+    "e": ""
+  },
+  {
+    "q": "Su sıcaklığındaki 10 °C'lik bir artış, kimyasal ve biyolojik reaksiyonlarda yaklaşık ne kadarlık bir artışa sebep olur? (Su Kalitesi)",
+    "o": [
+      "Beş kat",
+      "On kat",
+      "İki veya üç kat",
+      "Değişim olmaz"
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "Aşağıdaki kavramları termal tabakalaşmadaki konum ve özelliklerine göre eşleştiriniz.\nI. Epilimniyon\nII. Hipolimniyon\nIII. Termoklin\na) Sıcaklığın hızlı değiştiği ince tabaka\nb) En üstteki sıcak yüzey tabakası\nc) En alttaki az yoğun tabaka (Su Kalitesi)",
+    "o": [
+      "I-b, II-c, III-a",
+      "I-a, II-b, III-c",
+      "I-c, II-a, III-b",
+      "I-b, II-a, III-c"
+    ],
+    "c": 0,
+    "e": ""
+  },
+  {
+    "q": "Saf suyun en yüksek yoğunluğa (1,0 g/cm3) ulaştığı sıcaklık derecesi kaçtır? (Su Kalitesi)",
+    "o": [
+      "0 °C",
+      "-1,4 °C",
+      "+4 °C",
+      "+10 °C"
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "Suların ışık geçirgenliğini (berraklık) cm cinsinden ölçmek için kullanılan pratik araç aşağıdakilerden hangisidir? (Su Kalitesi)",
+    "o": [
+      "Türbidimetre",
+      "Secchi Diski",
+      "Termometre",
+      "Oksijenmetre"
+    ],
+    "c": 1,
+    "e": ""
+  },
+  {
+    "q": "Türbidimetre cihazı ile ölçülen bulanıklığın birimi aşağıdakilerden hangisidir? (Su Kalitesi)",
+    "o": [
+      "mg/L",
+      "NTU",
+      "cm",
+      "g/L"
+    ],
+    "c": 3,
+    "e": ""
+  },
+  {
+    "q": "Aşağıdaki bulanıklık türlerini nedenleriyle eşleştiriniz.\nI. Toprak partikülleri\nII. Organik kaynaklı\nIII. Planktonik\na) Fitoplankton ve alg yoğunluğu\nb) Sel ve yüzey akışları\nc) Atık sular ve ölü organizmalar (Su Kalitesi)",
+    "o": [
+      "I-c, II-a, III-b",
+      "I-a, II-b, III-c",
+      "I-b, II-c, III-a",
+      "I-b, II-a, III-c"
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "Secchi Diski ile ölçülen ışık geçirgenliği değerine göre, hangi aralık \"plankton gelişiminin yeterli olduğu\" anlamına gelir? (Su Kalitesi)",
+    "o": [
+      "10-20 cm",
+      "30-60 cm",
+      "80-100 cm",
+      "1 m'den fazla"
+    ],
+    "c": 1,
+    "e": ""
+  },
+  {
+    "q": "Aşağıdaki balık gruplarını, yetiştiricilik sularında istenecek \"Biyokimyasal Oksijen İhtiyacı (BOİ)\" üst sınır değerleriyle eşleştiriniz.\nI. Alabalıkgiller\nII. Sazangiller\na) < 6,0 mg/L\nb) < 3,0 mg/L (Su Kalitesi)",
+    "o": [
+      "I-b, II-b",
+      "I-b, II-a",
+      "I-a, II-a",
+      "I-a, II-b"
+    ],
+    "c": 0,
+    "e": ""
+  },
+  {
+    "q": "Havuzlarda çözünmüş oksijen miktarının gün içerisindeki döngüsü düşünüldüğünde, oksijenin \"en az\" ve \"en fazla\" olduğu zaman dilimleri hangi seçenekte doğru verilmiştir? (Su Kalitesi)",
+    "o": [
+      "En az: Akşamüstü / En fazla: Gece yarısı",
+      "En az: Öğle vakti / En fazla: Gün doğumu",
+      "En az: Akşamüstü / En fazla: Öğle vakti",
+      "En az: Gün doğumu / En fazla: Akşamüstü (18.00 civarı)"
+    ],
+    "c": 3,
+    "e": ""
+  },
+  {
+    "q": "Su kaynaklarının özelliklerine dair aşağıda verilen bilgilerden hangisi \"yeraltı suları\" için bir dezavantajdır? (Su Kalitesi)",
+    "o": [
+      "Parazit ve hastalık yapıcı organizma taşımamaları",
+      "Su sıcaklıklarının fazla değişken olmaması",
+      "Oksijence fakir, karbondioksit ve azotça zengin olmaları",
+      "Mevsimlik debi değişimlerinin az olması"
+    ],
+    "c": 0,
+    "e": ""
+  },
+  {
+    "q": "Birim ağırlık başına oksijen tüketimi ile balık büyüklüğü arasındaki ilişki nasıldır? (Su Kalitesi)",
+    "o": [
+      "Büyük balıklar, küçük balıklardan daha çok oksijen tüketir.",
+      "Balık büyüklüğü ile oksijen tüketimi arasında ilişki yoktur.",
+      "Küçük balıklar, büyük balıklardan birim ağırlık başına daha çok oksijen tüketir.",
+      "Sadece larva döneminde oksijen tüketimi yüksektir."
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "Aşağıdaki su kaynaklarını yetiştiricilikteki temel avantaj/dezavantajlarıyla eşleştiriniz.\nI. Akarsular\nII. Yeraltı suları\na) Oksijence fakir ama hastalık riski düşük\nb) Oksijence zengin ama sel/bulanıklık riski var (Su Kalitesi)",
+    "o": [
+      "I-a, II-b",
+      "I-b, II-b",
+      "I-a, II-a",
+      "I-b, II-a"
+    ],
+    "c": 1,
+    "e": ""
+  },
+  {
+    "q": "Denizlerde ağ kafes işletmeleri kurulurken, yasal düzenlemelere göre \"açık deniz (off-shore)\" sayılabilmesi için su derinliği en az kaç metre olmalıdır? (Su Kalitesi)",
+    "o": [
+      "10 metre",
+      "20 metre",
+      "100 metre",
+      "40 metre"
+    ],
+    "c": 3,
+    "e": ""
+  },
+  {
+    "q": "Kültür balıkçılığında yemleme kaynaklı besin elementi yükünün yaklaşık yüzde kaçı balık etinde tutulurken, geri kalanı doğaya bırakılmaktadır? (Su Kalitesi)",
+    "o": [
+      "%10 tutulur - %90 bırakılır",
+      "%50 tutulur - %50 bırakılır",
+      "%25 tutulur - %75 bırakılır",
+      "%75 tutulur - %25 bırakılır"
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "Secchi Diski ölçümüne göre, \"oksijen yetersizliği riskinin\" başladığı sınır derinlik aşağıdakilerden hangisidir? (Su Kalitesi)",
+    "o": [
+      "1 metre",
+      "30 cm'den az",
+      "60 cm'den fazla",
+      "10 cm'den az"
+    ],
+    "c": 0,
+    "e": ""
+  },
+  {
+    "q": "Sudaki toplam amonyak miktarı içerisinde bulunan \"zehirli\" ve \"zehirsiz\" formlar hangi seçenekte doğru eşleştirilmiştir? (Su Kalitesi)",
+    "o": [
+      "Zehirli: Amonyum (NH4+) / Zehirsiz: Serbest Amonyak (NH3)",
+      "Zehirli: Nitrat / Zehirsiz: Nitrit",
+      "Zehirli: Nitrit / Zehirsiz: Serbest Amonyak",
+      "Zehirli: Serbest Amonyak (NH3) / Zehirsiz: Amonyum (NH4+)"
+    ],
+    "c": 3,
+    "e": ""
+  },
+  {
+    "q": "Aşağıdaki su kalite parametrelerinden hangilerinin artışı, sudaki serbest amonyak yüzdesinin artmasına neden olur? (Su Kalitesi)",
+    "o": [
+      "Oksijen ve pH",
+      "pH ve Sıcaklık",
+      "Tuzluluk",
+      "Karbondioksit"
+    ],
+    "c": 1,
+    "e": ""
+  },
+  {
+    "q": "Aşağıdaki bakterileri, azot döngüsündeki görevleriyle eşleştiriniz.\nI. Nitrosomonas\nII. Nitrobacter\na) Nitriti nitrata dönüştürür\nb) Amonyağı nitrite dönüştürür (Su Kalitesi)",
+    "o": [
+      "I-a, II-b",
+      "I-b, II-b",
+      "I-a, II-a",
+      "I-b, II-a"
+    ],
+    "c": 3,
+    "e": ""
+  },
+  {
+    "q": "Nitritin balık kanındaki hemoglobin ile birleşerek oksijen taşıma kapasitesini yok etmesi sonucu oluşan hastalık aşağıdakilerden hangisidir? (Su Kalitesi)",
+    "o": [
+      "Beyaz Benek Hastalığı",
+      "Kahverengi Kan Hastalığı",
+      "Solungaç Çürüklüğü",
+      "Gaz Kabarcığı Hastalığı"
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "Balık yetiştiriciliğinde pH değerinin gün içerisindeki değişimi düşünüldüğünde, pH en yüksek değerine ne zaman ulaşır? (Su Kalitesi)",
+    "o": [
+      "Öğleden sonra",
+      "Gece yarısında",
+      "Gün doğumunda",
+      "Değişmez"
+    ],
+    "c": 0,
+    "e": ""
+  },
+  {
+    "q": "Bir suyun asitleri nötralize etme kapasitesine ne ad verilir? (Su Kalitesi)",
+    "o": [
+      "Alkalinite",
+      "Tuzluluk",
+      "Su Sertliği",
+      "Bulanıklık"
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "Nitrifikasyon bakterilerinin en verimli çalıştığı pH aralığı nedir? (Su Kalitesi)",
+    "o": [
+      "4.0-5.5",
+      "7.5-8.5",
+      "9.0-11.0",
+      "2.0-3.0"
+    ],
+    "c": 1,
+    "e": ""
+  },
+  {
+    "q": "Sudaki kalsiyum ve magnezyum iyonlarının toplamına ne ad verilir? (Su Kalitesi)",
+    "o": [
+      "Ozmotik Basınç",
+      "Toplam Sertlik",
+      "İletkenlik",
+      "Alkalinite"
+    ],
+    "c": 0,
+    "e": ""
+  },
+  {
+    "q": "Sudaki yüksek CO2 konsantrasyonunun oksijen taşıma kapasitesini düşürmesi olayına ne ad verilir? (Su Kalitesi)",
+    "o": [
+      "Liebig",
+      "Nitrifikasyon",
+      "Şok",
+      "Bohr Etkisi"
+    ],
+    "c": 3,
+    "e": ""
+  },
+  {
+    "q": "Aşağıdaki gazları özellikleriyle eşleştiriniz.\nI. CO2\nII. H2S\nIII. Cl2\na) Çürük yumurta kokulu\nb) Fotosentez gazı\nc) Dezenfektan (Su Kalitesi)",
+    "o": [
+      "I-a, II-b, III-c",
+      "I-b, II-a, III-c",
+      "I-c, II-a, III-b",
+      "I-b, II-c, III-a"
+    ],
+    "c": 1,
+    "e": ""
+  },
+  {
+    "q": "Ağır metallerin toksisitesi hangi durumda artar? (Su Kalitesi)",
+    "o": [
+      "Sertlik azalması",
+      "Sıcaklık artışı",
+      "Bulanıklık",
+      "Işık"
+    ],
+    "c": 0,
+    "e": ""
+  },
+  {
+    "q": "H2S güvenli sınır değeri nedir? (Su Kalitesi)",
+    "o": [
+      "10 mg/L",
+      "5 mg/L",
+      "0.002 mg/L",
+      "1 mg/L"
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "Ölçüm zamanları eşleşmesi?\nI. Oksijen\nII. pH\na) Akşam\nb) Sabah (Su Kalitesi)",
+    "o": [
+      "I-a, II-b",
+      "I-b, II-a",
+      "I-a, II-a",
+      "I-b, II-b"
+    ],
+    "c": 1,
+    "e": ""
+  },
+  {
+    "q": "Genel parametreler hangi sıklıkla izlenir? (Su Kalitesi)",
+    "o": [
+      "Günlük",
+      "Saatlik",
+      "Yıllık",
+      "Haftalık"
+    ],
+    "c": 3,
+    "e": ""
+  },
+  {
+    "q": "Bakteri yoksa hangisi etkisizdir? (Su Kalitesi)",
+    "o": [
+      "Gübre",
+      "Kireç",
+      "Enzim",
+      "Tuz"
+    ],
+    "c": 1,
+    "e": ""
+  },
+  {
+    "q": "Stenoterm/Euryterm eşleşmesi? (Su Kalitesi)",
+    "o": [
+      "I-b II-a",
+      "I-a II-b",
+      "I-a II-a",
+      "I-b II-b"
+    ],
+    "c": 0,
+    "e": ""
+  },
+  {
+    "q": "Deniz suyunun donma noktası kaçtır? (Su Kalitesi)",
+    "o": [
+      "0 °C",
+      "-0,5 °C",
+      "-1,4 °C",
+      "-4,0 °C"
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "Havuzlarda suyun \"ötrofikasyon\" durumunu belirlemede en kritik sınırlayıcı besin elementi hangisidir? (Su Kalitesi)",
+    "o": [
+      "Potasyum",
+      "Azot",
+      "Fosfor",
+      "Karbon"
+    ],
+    "c": 1,
+    "e": ""
+  },
+  {
+    "q": "Stresli koşullarda yaşayan bir balığın bağışıklık sisteminde bozukluklara yol açan ve kanda seviyesi artış gösteren hormon aşağıdakilerden hangisidir?",
+    "o": [
+      "Amonyum",
+      "Kortisol",
+      "Nitrit",
+      "İyodofor"
+    ],
+    "c": 1,
+    "e": ""
+  },
+  {
+    "q": "Aşağıdaki stres türlerini ve örneklerini doğru şekilde eşleştiriniz.",
+    "o": [
+      "I-a, II-b, III-c",
+      "I-c, II-b, III-a",
+      "I-b, II-a, III-c",
+      "I-b, II-c, III-a"
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "Balık vücudunda patojenlerin girişini engelleyen ilk fiziksel bariyer aşağıdakilerden hangisidir?",
+    "o": [
+      "Mukus",
+      "İmmunostimulant",
+      "Antimetabolit",
+      "Probiyotik"
+    ],
+    "c": 0,
+    "e": ""
+  },
+  {
+    "q": "Aşağıdaki beslenme bozukluğu belirtilerini ilgili durumlarla eşleştiriniz.",
+    "o": [
+      "I-a, II-b, III-c",
+      "I-c, II-a, III-b",
+      "I-b, II-c, III-a",
+      "I-b, II-a, III-c"
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "\"Patojenlerden tamamen kurtulmak ve mikropları tamamen elimine etmek\" işlemi akademik olarak nasıl adlandırılır?",
+    "o": [
+      "Sterilizasyon",
+      "Dezenfeksiyon",
+      "İmmersiyon",
+      "Karantina"
+    ],
+    "c": 0,
+    "e": ""
+  },
+  {
+    "q": "Balıklarda kullanılan dezenfektanlar ve kullanım alanları ile ilgili hangisi doğrudur?",
+    "o": [
+      "Formol - Sadece havuzların fiziksel temizliği",
+      "Sodyum Klorid - Deniz balıklarının ana dezenfektanı",
+      "İyodofor - Gözlenmiş yumurtaların dezenfeksiyonu",
+      "Hidrojen Peroksit - Sadece toprağın kurutulması"
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "Balıklarda aşılama yöntemleri ile ilgili verilen bilgilerden hangisi yanlıştır?",
+    "o": [
+      "Enjeksiyon yöntemi en etkin yöntemdir ancak balık bayıltılarak uygulanır.",
+      "İmmersiyon yönteminde aşı balığın solungaçları yoluyla alınır.",
+      "Oral yöntemde balıklar üzerinde hiçbir stres oluşmaz.",
+      "Oral yöntemde sindirim enzimleri aşının yapısını asla bozamaz."
+    ],
+    "c": 3,
+    "e": ""
+  },
+  {
+    "q": "Suyun azot gazı ile aşırı doyması sonucunda balıklarda görülen tehlikeli hastalık aşağıdakilerden hangisidir?",
+    "o": [
+      "Katarakt",
+      "Gaz Kabarcığı Hastalığı",
+      "Bakteriyel Solungaç Hastalığı",
+      "Hiperkapnia"
+    ],
+    "c": 1,
+    "e": ""
+  },
+  {
+    "q": "Aşağıdaki azot bileşiklerini ve özelliklerini eşleştiriniz.",
+    "o": [
+      "I-a, II-b, III-c",
+      "I-c, II-b, III-a",
+      "I-b, II-a, III-c",
+      "I-b, II-c, III-a"
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "Balığın kanındaki karbondioksit miktarının artması sonucu kan pH'sının düşmesi ve asidik hale gelmesi durumu nasıl adlandırılır?",
+    "o": [
+      "Ekzoftalmus",
+      "Hiperkapnia",
+      "İmmersiyon",
+      "Fotosentez"
+    ],
+    "c": 1,
+    "e": ""
+  },
+  {
+    "q": "Bakır sülfat (CuSO4) kullanımıyla ilgili aşağıdaki ifadelerden hangisi doğrudur?",
+    "o": [
+      "Düşük alkaliniteli sularda balıklar için daha güvenlidir.",
+      "Sadece iç parazitlerin tedavisinde kullanılır.",
+      "Yüksek alkaliniteli sularda balıklar için özellikle öldürücüdür (lethal).",
+      "Uygulama öncesi suyun alkalinitesinin bilinmesine gerek yoktur."
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "Aşağıdaki kimyasal maddeleri ve kullanım risklerini/özelliklerini doğru şekilde eşleştiriniz.",
+    "o": [
+      "I-c, II-a, III-b",
+      "I-a, II-b, III-c",
+      "I-b, II-a, III-c",
+      "I-c, II-b, III-a"
+    ],
+    "c": 0,
+    "e": ""
+  },
+  {
+    "q": "Metne göre, herhangi bir kimyasal tedavi tüm balıklara uygulanmadan önce izlenmesi gereken en güvenli prosedür nedir?",
+    "o": [
+      "Tüm havuzun dozajını hemen artırmak.",
+      "Kimyasalı yemle karıştırıp doğrudan vermek.",
+      "Öncelikle sadece birkaç balık üzerinde deneme yapmak.",
+      "Sadece gece saatlerinde uygulama yapmak."
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "Chilodonella sp. ve Trichodina sp. gibi parazitlerin balık vücudunda en yoğun yerleştiği doku hangisidir?",
+    "o": [
+      "Bağırsak epiteli",
+      "Solungaçlar",
+      "Karaciğer parankiması",
+      "Omurilik sıvısı"
+    ],
+    "c": 1,
+    "e": ""
+  },
+  {
+    "q": "\"Mükemmel bir ektoparazitik\" olarak tanımlanan ancak sudaki oksijeni tüketme riski nedeniyle güçlü havalandırma gerektiren madde hangisidir?",
+    "o": [
+      "İyodofor",
+      "Sodyum Klorid",
+      "Formalin",
+      "Bakır sülfat"
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "Flagellat protozoanlarla ilgili olarak, bu parazitlerin yerleşim yerlerine göre sınıflandırılması hangi seçenekte doğru verilmiştir?",
+    "o": [
+      "Hem eksternal (dış) hem de internal (iç) organlarda bulunabilirler.",
+      "Sadece solungaçlarda bulunurlar.",
+      "Sadece bağırsak kanalında bulunurlar.",
+      "Sadece kanda bulunurlar."
+    ],
+    "c": 0,
+    "e": ""
+  },
+  {
+    "q": "Aşağıdaki parazit türlerini ve mikroskobik preparatlardaki tipik görünüm özelliklerini eşleştiriniz.",
+    "o": [
+      "I-a, II-b, III-c",
+      "I-c, II-b, III-a",
+      "I-b, II-a, III-c",
+      "I-b, II-c, III-a"
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "Bir işletmede yoğun ektoparazit enfeksiyonu görüldüğünde, \"çevre dostu\" olması nedeniyle tercih edilen oksidan madde aşağıdakilerden hangisidir?",
+    "o": [
+      "Hidrojen Peroksit",
+      "Bakır Sülfat",
+      "Malahit Yeşili",
+      "Potasyum Permanganat"
+    ],
+    "c": 0,
+    "e": ""
+  },
+  {
+    "q": "Bakır sülfat uygulamasında suyun alkalinitesinin (sertliğinin) hayati önem taşımasının temel nedeni nedir?",
+    "o": [
+      "Suyun rengini değiştirmesi.",
+      "Düşük alkalinitede bakırın toksisitesinin azalması.",
+      "Yüksek alkaliniteli sularda bakırın balıklar için öldürücü (lethal) dozlara ulaşması.",
+      "Sadece alglerin büyümesini hızlandırması."
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "Potasyum permanganat (KMnO4) banyoları sırasında doz aşımı veya çok sık tekrarlanan uygulamalar balıklarda en çok hangi dokuya zarar verir?",
+    "o": [
+      "Kas dokusu",
+      "Solungaç epitel dokusu",
+      "Yüzme kesesi",
+      "İskelet sistemi"
+    ],
+    "c": 1,
+    "e": ""
+  },
+  {
+    "q": "Flagellatlar (kamçılılar) arasında yer alan ve hem eksternal (deri/solungaç) hem de internal (kan/bağırsak) formları bulunan parazit grubunun hareketi aşağıdakilerden hangisiyle sağlanır?",
+    "o": [
+      "Siller (Cilia)",
+      "Yalancı ayaklar (Pseudopod)",
+      "Kamçılar (Flagella)",
+      "Dişli çark sistemi"
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "Aşağıdaki flagellat türlerini ve tipik yerleşim yerlerini eşleştiriniz.",
+    "o": [
+      "I-b, II-c, III-a",
+      "I-a, II-b, III-c",
+      "I-c, II-a, III-b",
+      "I-b, II-a, III-c"
+    ],
+    "c": 0,
+    "e": ""
+  },
+  {
+    "q": "Hexamita enfeksiyonlarında (Heksamitiazis) balıklarda görülen en tipik klinik belirti aşağıdakilerden hangisidir?",
+    "o": [
+      "Solungaçlarda aşırı mukus artışı",
+      "Gözlerin yuvalarından fırlaması (Ekzoftalmus)",
+      "Karın çöküklüğü ve sarımsı-beyazımsı dışkı",
+      "Deride pul dökülmesi"
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "\"Ichthyobodo necator\" (eski adıyla Costia) enfeksiyonu görülen balıklarda derinin üzerinde oluşan gri-mavi tabakanın temel nedeni nedir?",
+    "o": [
+      "Aşırı mukus salgılanması (hiperplazi)",
+      "Kanama odakları",
+      "Parazitin kendi rengi",
+      "Yem kalıntıları"
+    ],
+    "c": 0,
+    "e": ""
+  },
+  {
+    "q": "Kan flagellatları (Örn: Trypanosoma) balıklara genellikle hangi yolla bulaşır?",
+    "o": [
+      "Kontamine yemler ile",
+      "Su sıcaklığının artmasıyla kendiliğinden",
+      "Sülükler (Hirudinea) gibi vektörler aracılığıyla",
+      "Sadece yumurta transferiyle"
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "Balık patolojisinde \"İchthyophthirius multifiliis\" olarak bilinen ve balığın derisinde/yüzgeçlerinde gözle görülebilen küçük beyaz lekelerle karakterize olan hastalığın yaygın adı nedir?",
+    "o": [
+      "Beyaz Benek Hastalığı",
+      "Kızıl Ağız Hastalığı",
+      "Kara Leke Hastalığı",
+      "Pamukçuk Hastalığı"
+    ],
+    "c": 0,
+    "e": ""
+  },
+  {
+    "q": "Aşağıdaki hastalık etkenlerini ve tipik belirtilerini doğru şekilde eşleştiriniz.",
+    "o": [
+      "I-b, II-a, III-c",
+      "I-c, II-b, III-a",
+      "I-a, II-b, III-c",
+      "I-a, II-c, III-b"
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "Bakteryel hastalıkların teşhisinde kullanılan \"Gram Boyama\" yönteminde, hücre duvarı yapısına göre \"Gram Pozitif\" bakteriler hangi renkte görülür?",
+    "o": [
+      "Pembe - Kırmızı",
+      "Mor - Mavi",
+      "Renksiz",
+      "Yeşil"
+    ],
+    "c": 1,
+    "e": ""
+  },
+  {
+    "q": "Balıklarda görülen \"Vibriosis\" hastalığının en temel bulaşma yolu ve hazırlayıcı faktörü aşağıdakilerden hangisidir?",
+    "o": [
+      "Çok düşük su sıcaklığı",
+      "Tatlı su akvaryumlarındaki aşırı bitki popülasyonu",
+      "Yüksek tuzluluk ve organik kirlilik içeren deniz suyu",
+      "Sadece dondurulmuş yem kullanımı"
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "Bir balık işletmesinde hastalık teşhisi için numune alınırken izlenmesi gereken \"altın kural\" aşağıdakilerden hangisidir?",
+    "o": [
+      "Sadece ölmüş ve kokmaya başlamış balıklar seçilmelidir.",
+      "Hastalık belirtilerini gösteren canlı veya can çekişen balıklar seçilmelidir.",
+      "Sadece en sağlıklı görünen balıklar incelenmelidir.",
+      "Numuneler doğrudan güneş ışığı altında 3 saat bekletilmelidir."
+    ],
+    "c": 1,
+    "e": ""
+  },
+  {
+    "q": "Bakteriyel enfeksiyonların tedavisinde kullanılan antibiyotiklerin \"Antibiogram\" testi yapılmadan rastgele seçilmesinin en büyük riski aşağıdakilerden hangisidir?",
+    "o": [
+      "Balıkların renklerinin solması",
+      "Su sıcaklığının aniden yükselmesi",
+      "Bakterilerde antibiyotik direncini (rezistans) geliştirmesi",
+      "Yem tüketiminin aşırı artması"
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "Aşağıdaki antibiyotik uygulama yöntemlerini ve özelliklerini doğru şekilde eşleştiriniz.",
+    "o": [
+      "I-c, II-a, III-b",
+      "I-a, II-b, III-c",
+      "I-b, II-a, III-c",
+      "I-c, II-b, III-a"
+    ],
+    "c": 0,
+    "e": ""
+  },
+  {
+    "q": "Antibiyotik tedavisi uygulanan balıkların insan tüketimine sunulmadan önce vücutlarından ilacın tamamen atılması için beklenen süreye ne ad verilir?",
+    "o": [
+      "Kuluçka Süresi",
+      "Adaptasyon Süresi",
+      "Arınma (Yasal Bekleme) Süresi",
+      "Karantina Süresi"
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "Metne göre, antibiyotiklerin dozajı belirlenirken temel alınan en önemli kriter hangisidir?",
+    "o": [
+      "Havuzun toplam su hacmi",
+      "Balıkların toplam canlı ağırlığı (Biyomas)",
+      "Balıkların yüzme hızı",
+      "Havuzdaki bitki yoğunluğu"
+    ],
+    "c": 1,
+    "e": ""
+  },
+  {
+    "q": "Gram Negatif (-) bakterilerin (Örn: Vibrio, Aeromonas) hücre duvarı yapısı nedeniyle Gram boyama sonucunda hangi renkte görünmesi beklenir?",
+    "o": [
+      "Koyu Mor",
+      "Siyah",
+      "Pembe - Kırmızı",
+      "Altın Sarısı"
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "Virüslerin biyolojik yapısı ve üreme mekanizmaları ile ilgili aşağıdakilerden hangisi doğrudur?",
+    "o": [
+      "İçine girdikleri konak hücrenin organellerini kullanarak üreme faaliyetini gerçekleştirirler.",
+      "Gerçek bir nükleusa ve hücre organellerine sahiptirler.",
+      "Antibiyotik uygulamaları ile kolayca kontrol altına alınabilirler.",
+      "Sadece balığın sindirim sisteminde üreyebilirler."
+    ],
+    "c": 0,
+    "e": ""
+  },
+  {
+    "q": "Aşağıdaki hastalık bulaşma rotalarını ve tanımlarını eşleştiriniz.",
+    "o": [
+      "I-a, II-b, III-c",
+      "I-c, II-b, III-a",
+      "I-b, II-a, III-c",
+      "I-b, II-c, III-a"
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "Mantar (Fungus) hastalıklarının balıklardaki seyri ile ilgili verilen bilgilerden hangisi yanlıştır?",
+    "o": [
+      "Mantar sporları su içinde yaygın bulunur ama sağlıklı balığı genelde hasta etmez.",
+      "Mantar genellikle birincil bir patojendir ve hiçbir stres faktörü olmadan saldırır.",
+      "Fiziksel hasar görmüş dokular mantarın tutunması ve çoğalması için uygun yerlerdir.",
+      "Mantar hastalıklarında karakteristik olarak beyaz pamuksu üremeler görülür."
+    ],
+    "c": 1,
+    "e": ""
+  },
+  {
+    "q": "\"İnfeksiyöz Pankreas Nekrozu (IPN)\" gibi viral hastalıkların balık yetiştiriciliğindeki etkileriyle ilgili hangisi doğrudur?",
+    "o": [
+      "Teşhis edilmeleri bakteriyel hastalıklara göre çok daha kolaydır.",
+      "Sadece ergin balıklarda ölümcül sonuçlar doğururlar.",
+      "Yoğun yetiştiricilik ortamları bu hastalıkların hızla yayılmasına yol açar.",
+      "Tedavisinde spesifik antiviraller her zaman kesin sonuç verir."
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "Metne göre, yeni satın alınan ve sağlık durumu tam bilinmeyen canlıların işletmeye girmesi durumunda uygulanması gereken en güvenli yöntem nedir?",
+    "o": [
+      "Karantina uygulaması ve sağlık sertifikası kontrolü.",
+      "Doğrudan üretim havuzlarına bırakmak.",
+      "Balıkları antibiyotikli suda 1 saat bekletmek.",
+      "Balıkları yüksek dozda vitaminle beslemek."
+    ],
+    "c": 0,
+    "e": ""
+  },
+  {
+    "q": "Balıkların deri, yüzgeç ve solungaçlarına tutunarak kanla beslenen, halk arasında \"Balık Kenesi\" olarak bilinen Crustacea sınıfı parazit aşağıdakilerden hangisidir?",
+    "o": [
+      "Lernaea sp.",
+      "Dactylogyrus sp.",
+      "Argulus sp.",
+      "Gyrodactylus sp."
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "Aşağıdaki parazitleri ve balık üzerindeki tipik yerleşim/görünüm özelliklerini eşleştiriniz.",
+    "o": [
+      "I-b, II-a, III-c",
+      "I-a, II-b, III-c",
+      "I-c, II-b, III-a",
+      "I-b, II-c, III-a"
+    ],
+    "c": 0,
+    "e": ""
+  },
+  {
+    "q": "Parazitik Crustacea (kabuklular) ile mücadelede kullanılan \"Organofosfatlı\" bileşiklerin uygulanması sırasında dikkat edilmesi gereken en önemli faktör nedir?",
+    "o": [
+      "Suyun renginin değişip değişmediği.",
+      "Havuzdaki bitkilerin boyu.",
+      "Su sıcaklığı ve balıkların stres durumu (toksisite riski).",
+      "Yemlerin markası."
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "Balık sülükleri (Hirudinea) ile ilgili olarak verilen;",
+    "o": [
+      "I ve II",
+      "Yalnız I",
+      "Yalnız II",
+      "I, II ve III"
+    ],
+    "c": 0,
+    "e": ""
+  },
+  {
+    "q": "\"Dactylogyrus\" ve \"Gyrodactylus\" gibi monogenetik trematodların (yassı solucanlar) teşhisinde en kesin yöntem aşağıdakilerden hangisidir?",
+    "o": [
+      "Balığın yüzme hızını ölçmek.",
+      "Su analiz kiti kullanmak.",
+      "Mikroskop altında haptor (tutunma organeli) ve kancaların incelenmesi.",
+      "Balığın pullarının rengine bakmak."
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "Suda çözünmüş oksijen miktarının doygunluk değerinin çok üzerine çıkması (aşırı doygunluk) durumunda, balıkların dokularında ve damarlarında gaz kabarcıklarının oluşmasıyla karakterize olan durum nedir?",
+    "o": [
+      "Amonyak Toksikasyonu",
+      "Gaz Kabarcığı Hastalığı",
+      "Alkaloz",
+      "Asidoz"
+    ],
+    "c": 1,
+    "e": ""
+  },
+  {
+    "q": "Aşağıdaki su kalitesi parametrelerini ve balık sağlığı üzerindeki kritik etkilerini eşleştiriniz.",
+    "o": [
+      "I-b, II-a, III-c",
+      "I-c, II-b, III-a",
+      "I-a, II-c, III-b",
+      "I-a, II-b, III-c"
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "Sudaki \"Serbest Amonyak\" (NH3) miktarı ve toksisitesi, aşağıdaki çevresel faktörlerden hangisinin artışıyla doğrudan yükselir?",
+    "o": [
+      "Sadece suyun derinliği",
+      "Su sıcaklığı ve pH değeri",
+      "Sudaki bitki sayısı",
+      "Işık yoğunluğu"
+    ],
+    "c": 1,
+    "e": ""
+  },
+  {
+    "q": "Balıklarda \"Nitrit\" (NO2) zehirlenmesi sonucunda kanın oksijen taşıma kapasitesinin düşmesi ve kanın kahverengiye dönmesiyle sonuçlanan tabloya ne ad verilir?",
+    "o": [
+      "Hiperglisemi",
+      "Hipotermi",
+      "Methemoglobinemi (Kahverengi Kan Hastalığı)",
+      "Lökositoz"
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "Su sıcaklığının balığın tolere edebileceği sınırların aniden üzerine çıkması (Termal Şok) durumunda balıkta görülen ilk fizyolojik tepki aşağıdakilerden hangisidir?",
+    "o": [
+      "Metabolizma hızının ve oksijen ihtiyacının aşırı artması",
+      "Metabolizma hızının yavaşlaması",
+      "Oksijen ihtiyacının azalması",
+      "Derideki pulların sertleşmesi"
+    ],
+    "c": 0,
+    "e": ""
+  },
+  {
+    "q": "Balıklarda görülen \"Scoliosis\" ve \"Lordosis\" (bel ve omurga eğrilikleri) vakaları, paraziter ve genetik etkilerin dışında en çok hangi vitaminin eksikliğiyle ilişkilendirilir?",
+    "o": [
+      "B12 Vitamini",
+      "E Vitamini",
+      "C Vitamini (Askorbik Asit)",
+      "D Vitamini"
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "Aşağıdaki vitamin eksikliklerini ve balıklarda yol açtığı klinik belirtileri eşleştiriniz.",
+    "o": [
+      "I-b, II-a, III-c",
+      "I-a, II-b, III-c",
+      "I-c, II-b, III-a",
+      "I-b, II-c, III-a"
+    ],
+    "c": 0,
+    "e": ""
+  },
+  {
+    "q": "Rasyonlarda (yemlerde) kullanılan yağların okside olması (acılaşması) sonucu oluşan serbest radikallerin dokulara zarar vermesini önleyen \"antioksidan\" etkili vitamin grubu aşağıdakilerden hangisidir?",
+    "o": [
+      "K ve B1 Vitaminleri",
+      "Sadece A Vitamini",
+      "C ve E Vitaminleri",
+      "D ve B12 Vitaminleri"
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "Balıklarda iyot noksanlığına bağlı olarak tiroid bezinin aşırı büyümesiyle karakterize olan hastalık aşağıdakilerden hangisidir?",
+    "o": [
+      "Anemi",
+      "Guatr",
+      "Raşitizm",
+      "Skorbüt"
+    ],
+    "c": 1,
+    "e": ""
+  },
+  {
+    "q": "Yemlerde bulunan ve besin maddelerinin sindirilmesini veya emilmesini engelleyen \"Antimetabolit\" (Antinutrisyonel) faktörlerle ilgili hangisi doğrudur?",
+    "o": [
+      "Balıkların büyümesini hızlandırırlar.",
+      "Sadece hayvansal kaynaklı unlarda bulunurlar.",
+      "Soya gibi bitkisel protein kaynaklarında bulunabilirler (Örn: Tripsininhibitorü).",
+      "Isıl işlemle (pişirme) asla etkisiz hale getirilemezler."
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "Balık hastalıkları ile mücadelede \"Biyogüvenlik\" kavramı kapsamında aşağıdakilerden hangisi işletmeye hastalık girişini önleyen en temel uygulamadır?",
+    "o": [
+      "Kontrollü su kaynağı kullanımı ve yabancı balık girişinin sınırlandırılması",
+      "Havuzların rengini değiştirmek",
+      "Ekipmanların (kepçe, ağ vb.) farklı havuzlar arasında dezenfekte edilmeden kullanılması",
+      "Balıklara her gün antibiyotik verilmesi"
+    ],
+    "c": 0,
+    "e": ""
+  },
+  {
+    "q": "Aşağıdaki teşhis yöntemlerini ve uygulama amaçlarını eşleştiriniz.",
+    "o": [
+      "I-a, II-b, III-c",
+      "I-c, II-b, III-a",
+      "I-b, II-a, III-c",
+      "I-b, II-c, III-a"
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "Balıklarda \"Zoonoz\" hastalıklar terimi neyi ifade eder?",
+    "o": [
+      "Sadece akvaryum balıklarında görülen hastalıkları",
+      "Balıklardan insanlara bulaşabilen hastalıkları",
+      "Tedavisi olmayan viral hastalıkları",
+      "Sadece deniz balıklarında görülen parazitleri"
+    ],
+    "c": 1,
+    "e": ""
+  },
+  {
+    "q": "Bir balık popülasyonunda hastalığın yayılma hızını ve ölüm oranını ifade eden terimler hangi seçenekte doğru verilmiştir (Yayılma hızı - Ölüm oranı)?",
+    "o": [
+      "Mortalite - Morbidite",
+      "Virülans - Toksisite",
+      "Morbidite - Mortalite",
+      "Enfeksiyon - Enfestasyon"
+    ],
+    "c": 2,
+    "e": ""
+  },
+  {
+    "q": "Metnin genel sonuç bölümüne göre, başarılı bir hastalık yönetimi için en kritik faktör aşağıdakilerden hangisidir?",
+    "o": [
+      "Hastalık çıktıktan sonra en pahalı ilacı kullanmak",
+      "Koruyucu hekimlik (stres yönetimi, hijyen ve aşılama) ile hastalığı önlemek",
+      "Su değişimini tamamen durdurmak",
+      "Balıkları sadece protein ağırlıklı beslemek"
+    ],
+    "c": 1,
+    "e": ""
+  }
+];
+
+  document.getElementById("mainTitle").textContent = `${BASE_SUBJECT} Deneme Sınavı`;
+  document.getElementById("headerSubject").textContent = BASE_SUBJECT;
+  document.getElementById("sourceTag").textContent = SOURCE_TEXT;
+  document.title = `${BASE_SUBJECT} Deneme Sınavı`;
+
+  if (performance.navigation.type === performance.navigation.TYPE_RELOAD || !sessionStorage.getItem("session_active")) {
+    Object.keys(localStorage).forEach(k => {
+      if (k.startsWith(storagePrefix())) localStorage.removeItem(k);
+    });
+    sessionStorage.setItem("session_active", "true");
+  }
+
+  let currentQuestions = [];
+  let currentIndex = 0;
+  let solvedIndex = -1;
+  let userAnswers = {};
+  let currentSetKey = "";
+  let stats = { correct: 0, wrong: 0 };
+  let wrongQuestionsMode = false;
+
+  function storagePrefix() {
+    return "exam_" + CURRENT_SUBJECT.replace(/\s+/g, "_") + "_";
+  }
+
+  function setStateKey(index) {
+    return storagePrefix() + "state_set_" + index;
+  }
+
+  function wrongQuestionsKey() {
+    return storagePrefix() + "wrong_questions_pool";
+  }
+
+  function getWrongQuestionsPool() {
+    return JSON.parse(localStorage.getItem(wrongQuestionsKey()) || "[]");
+  }
+
+  function saveWrongQuestionsPool(pool) {
+    localStorage.setItem(wrongQuestionsKey(), JSON.stringify(pool));
+  }
+
+  function addWrongQuestionToPool(question) {
+    const pool = getWrongQuestionsPool();
+
+    const exists = pool.some(item =>
+      item.q === question.q &&
+      JSON.stringify(item.o) === JSON.stringify(question.o)
+    );
+
+    if (!exists) {
+      pool.push({
+        q: question.q,
+        o: [...question.o],
+        c: question.c,
+        e: question.e || ""
+      });
+      saveWrongQuestionsPool(pool);
+    }
+  }
+
+  function normalizeQuestion(q, originalIndex) {
+    return {
+      id: q.id || ("q_" + originalIndex + "_" + Math.random().toString(36).slice(2, 8)),
+      originalNo: originalIndex + 1,
+      q: q.q,
+      o: [...q.o],
+      c: q.c,
+      e: q.e || "",
+      isRetry: q.isRetry || false,
+      retryFrom: q.retryFrom || null,
+      retryCount: q.retryCount || 0,
+      answeredCorrectly: q.answeredCorrectly || false
+    };
+  }
+
+  function initMenu() {
+    const menuGrid = document.getElementById("menuGrid");
+    menuGrid.innerHTML = "";
+
+    const totalSets = Math.ceil(questions.length / QUESTIONS_PER_SET);
+
+    let setsPerButton = 1;
+    let buttonCount = totalSets;
+
+    if (buttonCount > 10) {
+      setsPerButton = 2;
+      buttonCount = Math.ceil(totalSets / setsPerButton);
+    }
+
+    buttonCount = Math.min(buttonCount, 10);
+
+    for (let i = 0; i < buttonCount; i++) {
+      const startSetNo = i * setsPerButton + 1;
+      const endSetNo = Math.min(startSetNo + setsPerButton - 1, totalSets);
+
+      const start = (startSetNo - 1) * QUESTIONS_PER_SET;
+      const end = Math.min(endSetNo * QUESTIONS_PER_SET, questions.length);
+
+      if (start >= questions.length) continue;
+
+      const key = setStateKey(i);
+
+      const saved = JSON.parse(localStorage.getItem(key) || "null");
+      const solved = saved ? Object.keys(saved.userAnswers || {}).length : 0;
+      const correct = saved?.stats?.correct || 0;
+      const wrong = saved?.stats?.wrong || 0;
+
+      const totalCurrent = saved?.currentQuestions?.length || (end - start);
+      const isCompleted = saved ? (solved >= totalCurrent && totalCurrent > 0) : false;
+
+      const label = startSetNo === endSetNo
+        ? `Deneme-${startSetNo} (${BASE_SUBJECT})`
+        : `Deneme-${startSetNo}-${endSetNo} (${BASE_SUBJECT})`;
+
+      const btn = document.createElement("button");
+      btn.className = `menu-btn ${isCompleted ? "locked" : ""}`;
+      btn.innerHTML = `
+        <strong>${label}</strong><br>
+        <small>${end - start} Soru | Çözülen ${solved} (Doğru ${correct} Yanlış ${wrong})</small>
+      `;
+
+      if (!isCompleted) {
+        btn.onclick = () => startSet(i, key, start, end);
+      }
+
+      menuGrid.appendChild(btn);
+    }
+
+    const wrongPool = getWrongQuestionsPool();
+
+    if (wrongPool.length > 0) {
+      const wrongBtn = document.createElement("button");
+      wrongBtn.className = "wrong-menu-btn";
+      wrongBtn.innerHTML = `
+        <strong>Yanlış Yapılan Sorular</strong><br>
+        <small>${wrongPool.length} Soru | Yeniden çöz</small>
+      `;
+      wrongBtn.onclick = openWrongQuestions;
+      menuGrid.appendChild(wrongBtn);
+    }
+  }
+
+  function openWrongQuestions() {
+    const pool = getWrongQuestionsPool();
+    if (!pool.length) return;
+
+    wrongQuestionsMode = true;
+    currentSetKey = storagePrefix() + "wrong_questions_state";
+
+    const saved = JSON.parse(localStorage.getItem(currentSetKey) || "null");
+
+    if (saved) {
+      currentQuestions = saved.currentQuestions;
+      currentIndex = saved.currentIndex;
+      solvedIndex = saved.solvedIndex;
+      userAnswers = saved.userAnswers || {};
+      stats = saved.stats || { correct: 0, wrong: 0 };
+    } else {
+      currentQuestions = pool.map((q, i) => ({
+        id: "wrong_" + i + "_" + Math.random().toString(36).slice(2, 8),
+        originalNo: i + 1,
+        q: q.q,
+        o: [...q.o],
+        c: q.c,
+        e: q.e || "",
+        isRetry: false,
+        retryFrom: null,
+        retryCount: 0,
+        answeredCorrectly: false
+      }));
+
+      currentIndex = 0;
+      solvedIndex = -1;
+      userAnswers = {};
+      stats = { correct: 0, wrong: 0 };
+      saveState();
+    }
+
+    document.getElementById("menuContainer").style.display = "none";
+    document.getElementById("quizContainer").style.display = "block";
+    document.getElementById("headerSubject").textContent = "Yanlış Yapılan Sorular";
+    loadQuestion();
+    window.scrollTo(0, 0);
+  }
+
+  function startSet(idx, key, start, end) {
+    wrongQuestionsMode = false;
+    currentSetKey = key;
+
+    const saved = JSON.parse(localStorage.getItem(key) || "null");
+
+    if (saved) {
+      currentQuestions = saved.currentQuestions;
+      currentIndex = saved.currentIndex;
+      solvedIndex = saved.solvedIndex;
+      userAnswers = saved.userAnswers || {};
+      stats = saved.stats || { correct: 0, wrong: 0 };
+    } else {
+      currentQuestions = questions.slice(start, end).map((q, i) => normalizeQuestion(q, start + i));
+      currentIndex = 0;
+      solvedIndex = -1;
+      userAnswers = {};
+      stats = { correct: 0, wrong: 0 };
+      saveState();
+    }
+
+    document.getElementById("menuContainer").style.display = "none";
+    document.getElementById("quizContainer").style.display = "block";
+    document.getElementById("headerSubject").textContent = BASE_SUBJECT;
+    loadQuestion();
+    window.scrollTo(0, 0);
+  }
+
+  function getQuestionTitle(q) {
+    const cleanQ = String(q.q || "").replace(/^\s*Soru-\d+\s*:\s*/i, "");
+    return `Soru-${q.originalNo} : ${cleanQ}`;
+  }
+
+  function loadQuestion() {
+    const q = currentQuestions[currentIndex];
+    const progress = ((currentIndex + 1) / currentQuestions.length) * 100;
+
+    document.getElementById("progressBar").style.width = progress + "%";
+    document.getElementById("footerLeft").textContent = `Kalan: ${Math.max(currentQuestions.length - (currentIndex + 1), 0)}`;
+    document.getElementById("footerRight").textContent = `${currentIndex + 1} / ${currentQuestions.length}`;
+    document.getElementById("questionText").textContent = getQuestionTitle(q);
+
+    const retryBadge = document.getElementById("retryBadge");
+    retryBadge.style.display = q.isRetry ? "block" : "none";
+
+    const optArea = document.getElementById("optionsArea");
+    const expArea = document.getElementById("explanationArea");
+    optArea.innerHTML = "";
+    expArea.style.display = "none";
+    expArea.innerHTML = "";
+
+    const letters = ["A", "B", "C", "D", "E"];
+
+    q.o.forEach((opt, idx) => {
+      const btn = document.createElement("button");
+      btn.className = "option-btn";
+      btn.innerHTML = `<strong>${letters[idx]})</strong> ${opt}`;
+
+      if (currentIndex <= solvedIndex) {
+        btn.disabled = true;
+        const userChoice = userAnswers[currentIndex];
+
+        if (idx === userChoice) {
+          if (userChoice === q.c) {
+            btn.classList.add("correct");
+            btn.innerHTML += ` <span class="tick show">✔</span>`;
+          } else {
+            btn.classList.add("wrong");
+          }
+        }
+
+        if (wrongQuestionsMode) {
+          if (idx === q.c) {
+            btn.classList.add("correct");
+            btn.innerHTML += ` <span class="tick show">✔</span>`;
+          }
+          expArea.innerHTML = `<strong>Açıklama:</strong> ${String(q.e || "").replace(/^\s*Açıklama\s*:\s*/i, "")}`;
+          expArea.style.display = "block";
+        } else {
+          if (userChoice === q.c) {
+            expArea.innerHTML = `<strong>Açıklama:</strong> ${String(q.e || "").replace(/^\s*Açıklama\s*:\s*/i, "")}`;
+            expArea.style.display = "block";
+          } else if (q.isRetry) {
+            if (idx === q.c) {
+              btn.classList.add("correct");
+              btn.innerHTML += ` <span class="tick show">✔</span>`;
+            }
+            expArea.innerHTML = `<strong>Açıklama:</strong> ${String(q.e || "").replace(/^\s*Açıklama\s*:\s*/i, "")}`;
+            expArea.style.display = "block";
+          }
+        }
+      } else {
+        btn.onclick = () => selectOption(idx);
+      }
+
+      optArea.appendChild(btn);
+    });
+
+    document.getElementById("prevBtn").style.visibility = currentIndex > 0 ? "visible" : "hidden";
+    document.getElementById("nextBtn").style.visibility = currentIndex <= solvedIndex ? "visible" : "hidden";
+  }
+
+  function selectOption(idx) {
+    const q = currentQuestions[currentIndex];
+    const isCorrect = idx === q.c;
+
+    userAnswers[currentIndex] = idx;
+    solvedIndex = Math.max(solvedIndex, currentIndex);
+
+    if (isCorrect) {
+      stats.correct++;
+      q.answeredCorrectly = true;
+    } else {
+      stats.wrong++;
+
+      if (wrongQuestionsMode) {
+        // Yanlış Yapılan Sorular modunda soru yeniden eklenmez.
+      } else {
+        addWrongQuestionToPool(q);
+
+        if (!q.isRetry) {
+          const retryQuestion = {
+            ...q,
+            isRetry: true,
+            retryFrom: q.originalNo,
+            retryCount: 1
+          };
+
+          const insertIndex = Math.min(currentIndex + 5, currentQuestions.length);
+          currentQuestions.splice(insertIndex, 0, retryQuestion);
+        }
+      }
+    }
+
+    saveState();
+    loadQuestion();
+  }
+
+  function saveState() {
+    localStorage.setItem(currentSetKey, JSON.stringify({
+      currentQuestions,
+      currentIndex,
+      solvedIndex,
+      userAnswers,
+      stats
+    }));
+  }
+
+  function goForward() {
+    if (currentIndex < solvedIndex) {
+      currentIndex = solvedIndex + 1;
+    } else if (currentIndex < currentQuestions.length - 1) {
+      currentIndex++;
+    } else {
+      return showMenu();
+    }
+
+    saveState();
+    loadQuestion();
+    window.scrollTo(0, 0);
+  }
+
+  function goBack() {
+    if (currentIndex > 0) {
+      currentIndex--;
+      saveState();
+      loadQuestion();
+      window.scrollTo(0, 0);
+    }
+  }
+
+  function showMenu() {
+    wrongQuestionsMode = false;
+    document.getElementById("headerSubject").textContent = BASE_SUBJECT;
+    document.getElementById("quizContainer").style.display = "none";
+    document.getElementById("menuContainer").style.display = "block";
+    initMenu();
+    window.scrollTo(0, 0);
+  }
+
+  function clearAllStatistics() {
+    if (confirm("Tüm veriler sıfırlansın mı?")) {
+      Object.keys(localStorage).forEach(k => {
+        if (k.startsWith(storagePrefix())) localStorage.removeItem(k);
+      });
+      initMenu();
+    }
+  }
+
+  function resetCurrentSet() {
+    if (confirm("Bu deneme sıfırlansın mı?")) {
+      localStorage.removeItem(currentSetKey);
+      showMenu();
+    }
+  }
+
+  initMenu();
+</script>
+
+<script>
+function shuffleArray(arr) {
+  const copy = [...arr];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+
+function buildPatternKey(seq) {
+  if (seq.length < 4) return "";
+  return seq.slice(-4).join('-');
+}
+
+function shuffleAllQuestions() {
+  if (!confirm("Tüm sorular ve şıkları karıştırılsın mı?")) return;
+
+  const originalQuestions = questions.map(q => ({
+    q: q.q,
+    o: [...q.o],
+    c: q.c,
+    e: q.e
+  }));
+
+  let success = false;
+  let finalQuestions = null;
+
+  for (let attempt = 0; attempt < 250; attempt++) {
+    const qOrder = shuffleArray(originalQuestions);
+    const placed = [];
+    const answerSeq = [];
+
+    let failed = false;
+
+    for (const q of qOrder) {
+      const optionIndices = [...Array(q.o.length).keys()];
+      const candidates = [];
+
+      for (let inner = 0; inner < 40; inner++) {
+        const perm = shuffleArray(optionIndices);
+        const correctIndex = perm.indexOf(q.c);
+        const prev = answerSeq[answerSeq.length - 1];
+        const prev2 = answerSeq[answerSeq.length - 2];
+        const prev3 = answerSeq[answerSeq.length - 3];
+
+        if (correctIndex === prev) continue; // aynı şık arka arkaya gelmesin
+        if (prev !== undefined && prev2 !== undefined && prev3 !== undefined) {
+          if (prev3 === 0 && prev2 === 1 && prev === 2 && correctIndex === 3) continue;
+          if (prev3 === 3 && prev2 === 2 && prev === 1 && correctIndex === 0) continue;
+        }
+
+        const recent = answerSeq.slice(-3);
+        if (recent.length === 3) {
+          const uniq = new Set([...recent, correctIndex]);
+          if (uniq.size === 4 && (
+            (recent[0] === 0 && recent[1] === 1 && recent[2] === 2 && correctIndex === 3) ||
+            (recent[0] === 1 && recent[1] === 2 && recent[2] === 3 && correctIndex === 0) ||
+            (recent[0] === 3 && recent[1] === 2 && recent[2] === 1 && correctIndex === 0) ||
+            (recent[0] === 2 && recent[1] === 1 && recent[2] === 0 && correctIndex === 3)
+          )) continue;
+        }
+
+        const scoreCounts = [0, 1, 2, 3, 4].map(idx => answerSeq.filter(x => x === idx).length);
+        const score = scoreCounts[correctIndex] + (correctIndex === prev ? 100 : 0);
+
+        candidates.push({ perm, correctIndex, score });
+      }
+
+      if (!candidates.length) {
+        failed = true;
+        break;
+      }
+
+      candidates.sort((a, b) => a.score - b.score || Math.random() - 0.5);
+      const best = candidates[0];
+
+      placed.push({
+        q: q.q,
+        o: best.perm.map(i => q.o[i]),
+        c: best.correctIndex,
+        e: q.e
+      });
+      answerSeq.push(best.correctIndex);
+    }
+
+    if (!failed) {
+      finalQuestions = placed;
+      success = true;
+      break;
+    }
+  }
+
+  if (!success) {
+    alert("Karıştırma sırasında uygun dağılım kurulamadı. Tekrar deneyin.");
+    return;
+  }
+
+  questions.length = 0;
+  finalQuestions.forEach(q => questions.push(q));
+
+  if (typeof storagePrefix === "function") {
+    Object.keys(localStorage).forEach(k => {
+      if (k.startsWith(storagePrefix())) localStorage.removeItem(k);
+    });
+  }
+
+  alert("Sorular profesyonel şekilde karıştırıldı!");
+  if (typeof initMenu === "function") initMenu();
+}
+</script>
+
+</body>
+</html>
